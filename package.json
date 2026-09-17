@@ -1,11 +1,16 @@
 {
   "name": "operasyon-ai-listener",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Operasyon AI Slack Socket Mode listener",
   "main": "index.js",
-  "type": "commonjs",
-  "engines": { "node": ">=20" },
-  "scripts": { "start": "node index.js" },
-  "dependencies": { "@slack/bolt": "^4.4.0" }
+  "scripts": {
+    "start": "node index.js",
+    "check": "node --check index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@slack/bolt": "4.4.0"
+  }
 }

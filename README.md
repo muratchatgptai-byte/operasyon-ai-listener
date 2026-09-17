@@ -1,16 +1,11 @@
-# Operasyon AI Listener
+# Operasyon AI Listener v2
 
-Node.js 20 Slack Socket Mode listener for Railway.
+Railway Variables:
+- SLACK_BOT_TOKEN
+- SLACK_APP_TOKEN
+- OPENAI_API_KEY
+- ALLOWED_USER_ID
+- OPENAI_MODEL (optional; default gpt-4o-mini)
 
-## Railway variables
-Required:
-- `SLACK_BOT_TOKEN`
-- `SLACK_APP_TOKEN`
-
-Optional:
-- `ALLOWED_USER_ID` (defaults to the configured Murat Slack user ID)
-
-Do not commit Slack tokens to this repository.
-
-## Test
-After Railway deploys successfully, DM Operasyon AI with `Test Railway` and check Railway runtime logs for an `allowed_dm` JSON entry.
+This version implements Slack DM -> OpenAI -> Slack DM.
+Google Sheets write integration is the next phase.

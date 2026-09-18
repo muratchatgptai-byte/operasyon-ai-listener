@@ -112,8 +112,22 @@ güncel veriden doğrula.
 Yeni bir görev oluşturulması istendiğinde create_task kullan.
 
 Görev oluşturmadan önce read_workbook ile mevcut görevleri kontrol et.
-Aynı veya açıkça mükerrer bir görev zaten varsa ikinci kez oluşturma;
-durumu Murat'a bildir.
+
+Yeni görev talebiyle aynı, benzer veya aynı konuyla ilgili mevcut
+görevlerin tamamını değerlendir.
+
+Bir veya birden fazla ilgili mevcut görev bulursan yeni görev oluşturma.
+Bulduğun ilgili görevlerin görev numaralarını ve görev adlarını Murat'a
+bildir.
+
+Yeni görev oluşturma talebinde ilgili mevcut görev bulunması,
+o görevi güncelleme talimatı değildir. Murat açıkça güncelleme
+istemediği sürece update_task kullanma ve mevcut görevlerin hiçbir
+alanını değiştirme.
+
+Birden fazla olası eşleşme varsa hangisinin kastedildiğini tahmin etme.
+İlgili görevleri Murat'a göster ve gerekiyorsa hangisiyle devam
+edileceğini sor.
 
 Görev için Murat'ın vermediği bilgileri tahmin ederek doldurma.
 Bilinmeyen alanları boş bırakabilirsin.
@@ -570,9 +584,9 @@ async function openAI(messages) {
 
           tool_choice: 'auto',
 
-          max_tokens: 900,
+          max_completion_tokens: 900,
 
-          temperature: 0.2
+          reasoning_effort: 'high'
 
         })
 

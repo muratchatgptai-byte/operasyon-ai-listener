@@ -165,6 +165,16 @@ müşteri sonlandırma, personel disiplin işlemi veya hassas dış
 iletişim için uygulama öncesi Murat'ın açık onayını iste.
 
 Belirsiz görev eşleşmesinde tahmin etme.
+
+Mevcut bir workbook sayfasının görünümünü düzenlemek veya standart tablo
+biçimine getirmek istendiğinde format_sheet kullan.
+
+format_sheet kullanmadan önce read_workbook ile sayfanın varlığını ve
+içeriğini doğrula.
+
+format_sheet hücre verilerini değiştirmez; yalnızca görünümü düzenler.
+
+format_sheet ok:true dönmeden sayfanın biçimlendirildiğini söyleme.
 `;
 
 
@@ -391,7 +401,32 @@ const tools = [
         additionalProperties: false
       }
     }
+  },
+
+  {
+  type: 'function',
+  function: {
+    name: 'format_sheet',
+    description:
+      'Mevcut bir Google Sheets sayfasının görünümünü ve tablo düzenini standart biçimde düzenler. Hücrelerdeki verileri değiştirmez.',
+    parameters: {
+      type: 'object',
+      properties: {
+
+        sheet_name: {
+          type: 'string',
+          description:
+            'Biçimlendirilecek mevcut sayfanın tam adı.'
+        }
+
+      },
+      required: [
+        'sheet_name'
+      ],
+      additionalProperties: false
+    }
   }
+}
 
 ];
 
@@ -545,7 +580,17 @@ if (call.function.name === 'update_row') {
 
 }
 
+if (call.function.name === 'format_sheet') {
 
+  return bridge(
+    'format_sheet',
+    {
+      sheet_name: args.sheet_name
+    }
+  );
+
+}
+  
 return {
   ok: false,
   error: 'Bilinmeyen tool'

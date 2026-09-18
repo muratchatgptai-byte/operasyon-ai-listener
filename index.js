@@ -607,6 +607,7 @@ async function askAgent(channel, text) {
   const history =
     conversations.get(channel) || [];
 
+  let taskDataChecked = false;
 
   const messages = [
 
@@ -679,10 +680,47 @@ async function askAgent(channel, text) {
 
       let result;
 
-      try {
+     try {
 
-        result =
-          await executeTool(call);
+  // Görev verisi okunursa bu tur için kontrol yapılmış say
+  if (
+    call.function.name === 'read_workbook' ||
+    call.function.name === 'list_tasks'
+  ) {
+    result = await executeTool(call);
+
+    if (result?.ok === true) {
+      taskDataChecked = true;
+    }
+  }
+
+  // Yeni görev oluşturmadan önce mevcut görevlerin
+  // bu mesaj döngüsünde mutlaka okunmuş olması gerekir
+  else if (
+    call.function.name === 'create_task' &&
+    !taskDataChecked
+  ) {
+    result = {
+      ok: false,
+      error:
+        'Yeni görev oluşturmadan önce mevcut görevleri read_workbook veya list_tasks ile kontrol et.'
+    };
+  }
+
+  // Diğer tool'ları normal çalıştır
+    
+ else {
+  result = await executeTool(call);
+
+  // Bir görev başarıyla oluşturulduysa,
+  // sonraki create_task için görevler yeniden okunmalı
+  if (
+    call.function.name === 'create_task' &&
+    result?.ok === true
+  ) {
+    taskDataChecked = false;
+  }
+}
 
       } catch (error) {
 

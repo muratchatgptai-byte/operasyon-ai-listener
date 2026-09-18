@@ -109,7 +109,18 @@ olarak kabul etme.
 Dar bir görev güncellemesi yapılacaksa bile doğru görevi
 güncel veriden doğrula.
 
-Görev güncellemesinde update_task kullan.
+Yeni bir görev oluşturulması istendiğinde create_task kullan.
+
+Görev oluşturmadan önce read_workbook ile mevcut görevleri kontrol et.
+Aynı veya açıkça mükerrer bir görev zaten varsa ikinci kez oluşturma;
+durumu Murat'a bildir.
+
+Görev için Murat'ın vermediği bilgileri tahmin ederek doldurma.
+Bilinmeyen alanları boş bırakabilirsin.
+
+create_task ok:true olmadan yeni görevin oluşturulduğunu söyleme.
+
+Mevcut görev güncellemesinde update_task kullan.
 
 update_task ok:true olmadan bir görevin güncellendiğini söyleme.
 
@@ -177,6 +188,84 @@ const tools = [
     }
   },
 
+
+{
+  type: 'function',
+  function: {
+    name: 'create_task',
+    description:
+      'Görevler sayfasında yeni bir görev oluşturur. Görev numarası sistem tarafından otomatik verilir.',
+    parameters: {
+      type: 'object',
+      properties: {
+
+        task: {
+          type: 'object',
+          description:
+            'Oluşturulacak görevin alanları. İş alanı zorunludur. Bilinmeyen alanları tahmin etmek yerine boş bırak.',
+          properties: {
+
+            'İş': {
+              type: 'string'
+            },
+
+            'Şirket': {
+              type: ['string', 'null']
+            },
+
+            'Ürün': {
+              type: ['string', 'null']
+            },
+
+            'Kategori': {
+              type: ['string', 'null']
+            },
+
+            'Önem': {
+              type: ['string', 'number', 'null']
+            },
+
+            'Aciliyet': {
+              type: ['string', 'number', 'null']
+            },
+
+            'Son Gün': {
+              type: ['string', 'null']
+            },
+
+            'Süre': {
+              type: ['string', 'number', 'null']
+            },
+
+            'Sorumlu': {
+              type: ['string', 'null']
+            },
+
+            'Durum': {
+              type: ['string', 'null']
+            },
+
+            'Sonraki Aksiyon': {
+              type: ['string', 'null']
+            },
+
+            'Gelir / Risk': {
+              type: ['string', 'number', 'null']
+            }
+
+          },
+          required: ['İş'],
+          additionalProperties: false
+        }
+
+      },
+      required: ['task'],
+      additionalProperties: false
+    }
+  }
+},
+
+  
   {
     type: 'function',
     function: {
@@ -392,7 +481,17 @@ async function executeTool(call) {
 
   }
 
+if (call.function.name === 'create_task') {
 
+  return bridge(
+    'create_task',
+    {
+      task: args.task
+    }
+  );
+
+}
+  
   if (call.function.name === 'update_task') {
 
   return bridge(

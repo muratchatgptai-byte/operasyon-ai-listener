@@ -562,7 +562,7 @@ async function openAI(messages) {
 
   const response =
     await fetch(
-      'https://api.openai.com/v1/chat/completions',
+      'https://api.openai.com/v1/responses',
       {
 
         method: 'POST',
@@ -577,17 +577,25 @@ async function openAI(messages) {
         body: JSON.stringify({
 
           model: OPENAI_MODEL,
-
-          messages,
-
-          tools,
-
+        
+          input: messages,
+        
+          tools: tools.map(tool => ({
+            type: 'function',
+            name: tool.function.name,
+            description: tool.function.description,
+            parameters: tool.function.parameters,
+            strict: false
+          })),
+        
           tool_choice: 'auto',
-
-          max_completion_tokens: 900,
-
-          reasoning_effort: 'high'
-
+        
+          reasoning: {
+            effort: 'high'
+          },
+        
+          max_output_tokens: 4000
+        
         })
 
       }
@@ -607,7 +615,7 @@ async function openAI(messages) {
   }
 
 
-  return body?.choices?.[0]?.message;
+  return body;
 
 }
 
@@ -623,7 +631,8 @@ async function askAgent(channel, text) {
 
   let taskDataChecked = false;
 
-  const messages = [
+  // Responses API için bu turun çalışma input'u
+  const input = [
 
     {
       role: 'system',
@@ -646,11 +655,11 @@ async function askAgent(channel, text) {
     round++
   ) {
 
-    const msg =
-      await openAI(messages);
+    const response =
+      await openAI(input);
 
 
-    if (!msg) {
+    if (!response) {
 
       throw new Error(
         'OpenAI boş yanıt döndürdü'
@@ -659,14 +668,66 @@ async function askAgent(channel, text) {
     }
 
 
-    messages.push(msg);
+    // Responses API output'unu sonraki tura taşı.
+    // Reasoning + function_call + message öğeleri korunur.
+    if (Array.isArray(response.output)) {
+      input.push(...response.output);
+    }
 
 
-    if (!msg.tool_calls?.length) {
+    const toolCalls =
+      (response.output || []).filter(
+        item =>
+          item?.type === 'function_call'
+      );
 
-      const answer =
-        (msg.content || '').trim() ||
-        'Yanıt üretemedim.';
+
+    // =========================================================
+    // TOOL ÇAĞRISI YOKSA NORMAL CEVABI DÖNDÜR
+    // =========================================================
+
+    if (!toolCalls.length) {
+
+      let answer =
+        (response.output_text || '').trim();
+
+
+      // output_text yoksa message içeriğinden metni çıkar
+      if (!answer) {
+
+        const textParts = [];
+
+        for (const item of response.output || []) {
+
+          if (
+            item?.type !== 'message' ||
+            !Array.isArray(item.content)
+          ) {
+            continue;
+          }
+
+          for (const part of item.content) {
+
+            if (
+              part?.type === 'output_text' &&
+              typeof part.text === 'string'
+            ) {
+              textParts.push(part.text);
+            }
+
+          }
+
+        }
+
+        answer =
+          textParts.join('\n').trim();
+
+      }
+
+
+      if (!answer) {
+        answer = 'Yanıt üretemedim.';
+      }
 
 
       conversations.set(
@@ -690,51 +751,87 @@ async function askAgent(channel, text) {
     }
 
 
-    for (const call of msg.tool_calls) {
+    // =========================================================
+    // TOOL ÇAĞRILARINI ÇALIŞTIR
+    // =========================================================
+
+    for (const call of toolCalls) {
 
       let result;
 
-     try {
 
-  // Görev verisi okunursa bu tur için kontrol yapılmış say
-  if (
-    call.function.name === 'read_workbook' ||
-    call.function.name === 'list_tasks'
-  ) {
-    result = await executeTool(call);
+      try {
 
-    if (result?.ok === true) {
-      taskDataChecked = true;
-    }
-  }
+        // -----------------------------------------------------
+        // Yeni görev oluşturulmadan önce görev verisi okunmalı
+        // -----------------------------------------------------
 
-  // Yeni görev oluşturmadan önce mevcut görevlerin
-  // bu mesaj döngüsünde mutlaka okunmuş olması gerekir
-  else if (
-    call.function.name === 'create_task' &&
-    !taskDataChecked
-  ) {
-    result = {
-      ok: false,
-      error:
-        'Yeni görev oluşturmadan önce mevcut görevleri read_workbook veya list_tasks ile kontrol et.'
-    };
-  }
+        if (
+          call.name === 'read_workbook' ||
+          call.name === 'list_tasks'
+        ) {
 
-  // Diğer tool'ları normal çalıştır
-    
- else {
-  result = await executeTool(call);
+          result =
+            await executeTool({
+              function: {
+                name: call.name,
+                arguments:
+                  call.arguments || '{}'
+              }
+            });
 
-  // Bir görev başarıyla oluşturulduysa,
-  // sonraki create_task için görevler yeniden okunmalı
-  if (
-    call.function.name === 'create_task' &&
-    result?.ok === true
-  ) {
-    taskDataChecked = false;
-  }
-}
+
+          if (result?.ok === true) {
+            taskDataChecked = true;
+          }
+
+        }
+
+
+        // -----------------------------------------------------
+        // Kontrol yapılmadan create_task çalıştırma
+        // -----------------------------------------------------
+
+        else if (
+          call.name === 'create_task' &&
+          !taskDataChecked
+        ) {
+
+          result = {
+            ok: false,
+            error:
+              'Yeni görev oluşturmadan önce mevcut görevleri read_workbook veya list_tasks ile kontrol et.'
+          };
+
+        }
+
+
+        // -----------------------------------------------------
+        // DİĞER TOOL'LAR
+        // -----------------------------------------------------
+
+        else {
+
+          result =
+            await executeTool({
+              function: {
+                name: call.name,
+                arguments:
+                  call.arguments || '{}'
+              }
+            });
+
+
+          // Bir görev başarıyla oluşturulduktan sonra
+          // sonraki create_task için görevler tekrar okunmalı.
+          if (
+            call.name === 'create_task' &&
+            result?.ok === true
+          ) {
+            taskDataChecked = false;
+          }
+
+        }
 
       } catch (error) {
 
@@ -751,16 +848,17 @@ async function askAgent(channel, text) {
       console.log(
         JSON.stringify({
           type: 'tool_call',
-          name: call.function.name,
+          name: call.name,
           ok: result?.ok === true
         })
       );
 
 
-      messages.push({
-        role: 'tool',
-        tool_call_id: call.id,
-        content: JSON.stringify(result)
+      // Responses API'ye tool sonucunu geri ver
+      input.push({
+        type: 'function_call_output',
+        call_id: call.call_id,
+        output: JSON.stringify(result)
       });
 
     }
@@ -773,7 +871,6 @@ async function askAgent(channel, text) {
   );
 
 }
-
 
 // ============================================================
 // SLACK MESSAGE HANDLER

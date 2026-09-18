@@ -113,10 +113,27 @@ Görev güncellemesinde update_task kullan.
 
 update_task ok:true olmadan bir görevin güncellendiğini söyleme.
 
-Görevler dışındaki sayfalarda şu anda yazma yetkin yoktur.
-Bu sayfalardaki bilgileri okuyabilir, karşılaştırabilir,
-yorumlayabilir ve bunlardan sonuç çıkarabilirsin fakat
-değiştirdiğini iddia etme.
+Görevler dışındaki mevcut workbook sayfalarına yeni kayıt
+veya satır eklemek için append_rows kullan.
+
+Görevler dışındaki mevcut bir kaydı değiştirmek için
+update_row kullan.
+
+append_rows veya update_row kullanmadan önce read_workbook
+ile güncel workbook'u oku. Doğru sayfayı ve mevcut veriyi
+doğrula.
+
+update_row kullanırken değiştirilmek istenen kaydın hangi
+satırda ve ilgili bilginin hangi sütunda olduğunu workbook
+verisinden belirle. Belirsiz eşleşmede tahmin etme; Murat'a sor.
+
+append_rows veya update_row ok:true dönmeden verinin
+eklendiğini ya da değiştirildiğini söyleme.
+
+Görevler sayfasında append_rows ve update_row kullanma.
+Görevler için yalnızca görev araçlarını kullan.
+
+Mevcut verileri silme yetkin yoktur.
 
 Para harcama, hukuki taahhüt, kritik gıda güvenliği kararı,
 müşteri sonlandırma, personel disiplin işlemi veya hassas dış
@@ -186,6 +203,86 @@ const tools = [
         },
         required: [
           'task_no',
+          'updates'
+        ],
+        additionalProperties: false
+      }
+    }
+  },
+
+  {
+    type: 'function',
+    function: {
+      name: 'append_rows',
+      description:
+        'Görevler dışındaki mevcut bir Google Sheets sayfasının sonuna bir veya daha fazla yeni satır ekler. Mevcut verileri değiştirmez.',
+      parameters: {
+        type: 'object',
+        properties: {
+
+          sheet_name: {
+            type: 'string',
+            description:
+              'Satırların ekleneceği mevcut sayfanın tam adı.'
+          },
+
+          rows: {
+            type: 'array',
+            description:
+              'Eklenecek satırlar. Her iç array Sheet üzerinde bir satırı temsil eder.',
+            items: {
+              type: 'array',
+              items: {
+                type: ['string', 'number', 'null']
+              }
+            }
+          }
+
+        },
+        required: [
+          'sheet_name',
+          'rows'
+        ],
+        additionalProperties: false
+      }
+    }
+  },
+
+  {
+    type: 'function',
+    function: {
+      name: 'update_row',
+      description:
+        'Görevler dışındaki mevcut bir Google Sheets sayfasında belirli bir satırın belirli hücrelerini günceller. Satır ve sütun numaraları read_workbook verisinden doğrulanmalıdır.',
+      parameters: {
+        type: 'object',
+        properties: {
+
+          sheet_name: {
+            type: 'string',
+            description:
+              'Güncellenecek mevcut sayfanın tam adı.'
+          },
+
+          row_number: {
+            type: 'integer',
+            description:
+              'Google Sheets üzerindeki gerçek satır numarası. İlk satır 1 numaradır.'
+          },
+
+          updates: {
+            type: 'object',
+            description:
+              'Anahtar gerçek sütun numarası, değer ise hücreye yazılacak yeni değerdir. Örnek: {"2":"Peçko","4":"21.09.2026"}',
+            additionalProperties: {
+              type: ['string', 'number', 'null']
+            }
+          }
+
+        },
+        required: [
+          'sheet_name',
+          'row_number',
           'updates'
         ],
         additionalProperties: false
@@ -298,21 +395,48 @@ async function executeTool(call) {
 
   if (call.function.name === 'update_task') {
 
-    return bridge(
-      'update_task',
-      {
-        task_no: args.task_no,
-        updates: args.updates
-      }
-    );
+  return bridge(
+    'update_task',
+    {
+      task_no: args.task_no,
+      updates: args.updates
+    }
+  );
 
-  }
+}
 
 
-  return {
-    ok: false,
-    error: 'Bilinmeyen tool'
-  };
+if (call.function.name === 'append_rows') {
+
+  return bridge(
+    'append_rows',
+    {
+      sheet_name: args.sheet_name,
+      rows: args.rows
+    }
+  );
+
+}
+
+
+if (call.function.name === 'update_row') {
+
+  return bridge(
+    'update_row',
+    {
+      sheet_name: args.sheet_name,
+      row_number: args.row_number,
+      updates: args.updates
+    }
+  );
+
+}
+
+
+return {
+  ok: false,
+  error: 'Bilinmeyen tool'
+};
 
 }
 

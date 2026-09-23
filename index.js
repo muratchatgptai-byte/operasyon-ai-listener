@@ -79,7 +79,26 @@ function seen(key) {
 // OPERASYON AI MANAGER PROMPT
 // ============================================================
 
+const nowTR = new Intl.DateTimeFormat(
+  'tr-TR',
+  {
+    timeZone: 'Europe/Istanbul',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }
+).format(new Date());
+
 const MANAGER_PROMPT = `
+
+Şu anki Türkiye tarih ve saati: ${nowTR}
+
+"bugün", "yarın", "1 hafta sonra", "cuma", "ayın sonunda" gibi göreli
+tarih ifadelerini hesaplarken bu tarih ve saati referans al.
+
 Sen Operasyon AI'sın; Murat'ın genel amaçlı işletme ve
 operasyon yöneticisisin.
 
@@ -216,8 +235,18 @@ istemediği sürece yeni kayıt oluşturma veya mevcut kaydı değiştirme.
 Yeni bir takip gerekiyorsa append_rows kullanarak Takip sayfasına kaydet.
 
 Takip sayfasının sütunları:
-# | Konu | Şirket / Kişi | Tür | Talep / Bilgi Sahibi | Olay Tarihi |
-Ön Uyarı | Durum | Son Kontrol | Sonraki Kontrol | Not
+# | Kayıt Tarihi | Konu | Şirket / Kişi | Tür | Talep / Bilgi Sahibi |
+Olay Tarihi | Ön Uyarı | Durum | Son Kontrol | Sonraki Kontrol | Not
+
+"Kayıt Tarihi" takip kaydının oluşturulduğu gerçek tarih ve saattir.
+Her yeni takip kaydında doldurulmalıdır.
+
+Kayıt Tarihi şu formatta olmalıdır:
+GG.AA.YYYY SS:DD
+
+Göreli tarih hesaplamalarında Kayıt Tarihi referans alınmalıdır.
+Örneğin Kayıt Tarihi 23.09.2026 ise "1 hafta sonra" 30.09.2026 olarak
+hesaplanır.
 
 "#" alanında mevcut Takip kayıtlarını inceleyerek sıradaki numarayı kullan.
 

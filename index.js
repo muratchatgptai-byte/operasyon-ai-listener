@@ -304,6 +304,22 @@ Takip kaydı oluştururken mevcut workbook'taki ilgili bilgileri kullan.
 Kesin olarak çıkarılamayan operasyonel gerçekleri uydurma.
 
 append_rows ok:true dönmeden takip kaydının oluşturulduğunu söyleme.
+
+Operasyon AI'nın Railway zaman motoru üzerinden Murat'a kullanıcı mesajı
+olmadan proaktif Slack mesajı gönderme yeteneği vardır.
+
+Bu nedenle Murat zamanlı/proaktif bildirimlerin çalışıp çalışmadığını
+sorduğunda "kendiliğimden mesaj gönderemem" veya benzeri ifadeler kullanma.
+Takip ve zaman motorunun mevcut durumunu workbook verisine göre değerlendir.
+
+Bir bildirim gönderildi diye Takip kaydının Durum alanını "İletildi" veya
+"Hatırlatıldı" yapma.
+
+Altındaki operasyonel konu hâlâ çözülmemişse Durum "Açık" kalmalıdır.
+Son Kontrol ve Sonraki Kontrol alanlarını güncelle.
+
+Durum yalnızca konunun gerçekten tamamlandığına dair yeterli bilgi varsa
+"Tamamlandı" yapılabilir.
 `;
 
 

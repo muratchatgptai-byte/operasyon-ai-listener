@@ -1062,6 +1062,315 @@ async function askAgent(channel, text) {
 
 }
 
+// =========================================================
+// PROAKTİF OPERASYON KONTROLÜ
+// =========================================================
+
+let proactiveCheckRunning = false;
+
+
+// ---------------------------------------------------------
+// MURAT'A SLACK DM GÖNDER
+// ---------------------------------------------------------
+
+async function sendProactiveSlackMessage(text) {
+
+  const opened = await app.client.conversations.open({
+    users: ALLOWED_USER_ID
+  });
+
+  const channelId =
+    opened?.channel?.id;
+
+  if (!channelId) {
+    throw new Error(
+      'Proaktif mesaj için Slack DM kanalı açılamadı.'
+    );
+  }
+
+  await app.client.chat.postMessage({
+    channel: channelId,
+    text: text
+  });
+}
+
+
+// ---------------------------------------------------------
+// PROAKTİF TAKİP KONTROLÜ
+// ---------------------------------------------------------
+
+async function runProactiveCheck() {
+
+  if (proactiveCheckRunning) {
+    return;
+  }
+
+  proactiveCheckRunning = true;
+
+  try {
+
+    const result = await askAgent(
+      '__proactive__',
+      `
+Bu kullanıcı tarafından başlatılmış normal bir sohbet değildir.
+Bu, Operasyon AI tarafından otomatik başlatılan proaktif operasyon kontrolüdür.
+
+Önce read_workbook kullanarak workbook'un tamamını oku.
+
+Amacın Murat'a rutin rapor üretmek değil; şu anda dikkat veya aksiyon
+gerektiren operasyonel durumları tespit etmektir.
+
+Özellikle aşağıdaki alanları kontrol et:
+
+1. TAKİP
+- Durumu "Açık" olan kayıtları incele.
+- Sonraki Kontrol tarihi gelmiş veya geçmiş kayıtları değerlendir.
+- Olay Tarihi yaklaşmış, bugün olmuş veya geçmiş kayıtları değerlendir.
+- Önceden bildirim yapılması gereken bir durum varsa Murat'a bildir.
+- Aynı konu hakkında gereksiz tekrar bildirim üretme.
+
+2. GÖREVLER
+- Son Gün tarihi geçmiş fakat tamamlanmamış görevleri tespit et.
+- Son Gün yaklaşan önemli veya acil görevleri değerlendir.
+- Uzun süredir açık/bekleyen ve aksiyon gerektiren görevleri değerlendir.
+- Önem ve Aciliyet alanlarını dikkate al.
+- Yalnızca gerçekten Murat'ın dikkatini gerektiren görevleri bildir.
+
+3. ALACAK TAKİP
+- Vadesi yaklaşan alacakları değerlendir.
+- Vadesi geçmiş ve kapanmamış alacakları tespit et.
+- Tahsilat açısından önceden iletişim kurulması gereken durumları değerlendir.
+- Geciken veya riskli tahsilatları Murat'a bildir.
+
+4. BEKLEYEN SİPARİŞLER
+- Varsa bekleyen siparişleri incele.
+- Gecikme, termin riski veya aksiyon gerektiren kayıtları tespit et.
+- Normal ilerleyen siparişler için gereksiz bildirim üretme.
+
+5. MÜŞTERİ ZİYARET PLANI
+- Bugünkü ve yaklaşan ziyaretleri değerlendir.
+- Gecikmiş veya yapılmamış planlı ziyaretleri tespit et.
+- Murat'ın önceden bilmesi gereken ziyaretleri bildir.
+
+6. DİĞER WORKBOOK SAYFALARI
+- Workbook'taki diğer sayfalarda açıkça tarih, gecikme, risk veya yaklaşan
+  aksiyon gösteren önemli bir durum varsa değerlendirebilirsin.
+- Sırf veri var diye bildirim üretme.
+
+BİLDİRİM KURALI:
+
+Murat'ın şu anda bilmesi veya harekete geçmesi gereken hiçbir şey yoksa
+yalnızca:
+
+NO_ACTION
+
+yaz.
+
+Bildirim gerekiyorsa kısa ve operasyonel yaz.
+Rutin özet hazırlama.
+Sadece dikkat gerektiren maddeleri yaz.
+
+Örneğin:
+
+"Peçko ödemesi yarın. Bugün ödeme teyidi için iletişime geçmek uygun olabilir."
+
+veya:
+
+"2 görev gecikmiş:
+#41 Robot Coupe Makine Tamir
+#55 Biber Ekibi Sigorta"
+
+TAKİP KAYDI GÜNCELLEME:
+
+Bir Takip kaydını gerçekten kontrol ettiysen gerektiğinde update_row ile:
+- Son Kontrol
+- Sonraki Kontrol
+- Durum
+
+alanlarını güncelleyebilirsin.
+
+Bir olay tamamlanmış olduğuna dair workbook'ta yeterli kanıt yoksa Durum'u
+kendiliğinden "Tamamlandı" yapma.
+
+Kesin olmayan operasyonel gerçekleri uydurma.
+
+Aynı konu için kısa aralıklarla tekrar tekrar bildirim gönderme.
+
+`
+    );
+
+    const message =
+      String(result || '').trim();
+
+    if (
+      !message ||
+      message === 'NO_ACTION'
+    ) {
+      return;
+    }
+
+    await sendProactiveSlackMessage(
+      message
+    );
+
+  } catch (error) {
+
+    console.error(
+      'Proaktif kontrol hatası:',
+      error
+    );
+
+  } finally {
+
+    proactiveCheckRunning = false;
+
+  }
+}
+
+// =========================================================
+// PROAKTİF ZAMAN MOTORU
+// =========================================================
+
+let lastProactiveSlot = '';
+
+function getIstanbulClock() {
+
+  const parts =
+    new Intl.DateTimeFormat(
+      'en-GB',
+      {
+        timeZone: 'Europe/Istanbul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        hourCycle: 'h23'
+      }
+    ).formatToParts(new Date());
+
+  const values = {};
+
+  for (const part of parts) {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value;
+    }
+  }
+
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute)
+  };
+}
+
+
+async function proactiveSchedulerTick() {
+
+  const now = getIstanbulClock();
+
+  const dateKey =
+    `${now.year}-${String(now.month).padStart(2, '0')}-${String(now.day).padStart(2, '0')}`;
+
+  let shouldRun = false;
+  let slotName = '';
+
+
+  // -------------------------------------------------------
+  // SABAH GENEL KONTROLÜ
+  // -------------------------------------------------------
+
+  if (
+    now.hour === 8 &&
+    now.minute >= 30 &&
+    now.minute < 35
+  ) {
+
+    shouldRun = true;
+    slotName = `${dateKey}-08:30`;
+
+  }
+
+
+  // -------------------------------------------------------
+  // GÜN İÇİ KONTROLLER
+  // -------------------------------------------------------
+
+  const proactiveHours =
+    [10, 12, 14, 16, 18, 20];
+
+  if (
+    proactiveHours.includes(now.hour) &&
+    now.minute >= 0 &&
+    now.minute < 5
+  ) {
+
+    shouldRun = true;
+
+    slotName =
+      `${dateKey}-${String(now.hour).padStart(2, '0')}:00`;
+
+  }
+
+
+  if (!shouldRun) {
+    return;
+  }
+
+
+  // Aynı kontrol zamanında iki kez çalışmasın
+  if (lastProactiveSlot === slotName) {
+    return;
+  }
+
+  lastProactiveSlot = slotName;
+
+  console.log(
+    'Proaktif kontrol başlıyor:',
+    slotName
+  );
+
+  await runProactiveCheck();
+}
+
+
+// Her dakika saate bak.
+// OpenAI her dakika çağrılmaz.
+setInterval(
+  () => {
+
+    proactiveSchedulerTick()
+      .catch(error => {
+
+        console.error(
+          'Proaktif zamanlayıcı hatası:',
+          error
+        );
+
+      });
+
+  },
+  60 * 1000
+);
+
+
+// GEÇİCİ PROAKTİF TEST
+setTimeout(() => {
+
+  runProactiveCheck()
+    .catch(error => {
+      console.error(
+        'Geçici proaktif test hatası:',
+        error
+      );
+    });
+
+}, 15 * 1000);
+
+
 // ============================================================
 // SLACK MESSAGE HANDLER
 // ============================================================

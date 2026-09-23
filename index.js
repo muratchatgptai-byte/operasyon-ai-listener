@@ -1103,7 +1103,7 @@ async function sendProactiveSlackMessage(text) {
 // PROAKTİF TAKİP KONTROLÜ
 // ---------------------------------------------------------
 
-async function runProactiveCheck() {
+async function runProactiveCheck(dueSignature = '') {
 
   if (proactiveCheckRunning) {
     return;
@@ -1113,11 +1113,30 @@ async function runProactiveCheck() {
 
   try {
 
+  const exactDueInstruction =
+  dueSignature
+    ? `
+Bu kontrol tam saatli bir Takip kaydı tarafından tetiklendi.
+
+Zamanı gelmiş takip kaydı:
+${dueSignature}
+
+Bu kaydın Durum'u hâlâ "Açık" ise bu takip için NO_ACTION kullanma.
+Murat bu zamanı özellikle takip/hatırlatma için belirledi.
+İlgili hatırlatmayı mutlaka kullanıcıya bildir.
+
+Hatırlatmayı gönderdikten sonra gerekli ise Son Kontrol ve Sonraki Kontrol
+alanlarını update_row ile güncelle.
+`
+    : '';
+    
     const result = await askAgent(
       '__proactive__',
       `
 Bu kullanıcı tarafından başlatılmış normal bir sohbet değildir.
 Bu, Operasyon AI tarafından otomatik başlatılan proaktif operasyon kontrolüdür.
+
+${exactDueInstruction}
 
 Önce read_workbook kullanarak workbook'un tamamını oku.
 
@@ -1599,7 +1618,7 @@ async function proactiveSchedulerTick() {
       dueSignature
     );
 
-    await runProactiveCheck();
+    await runProactiveCheck(dueSignature);
 
     return;
   }

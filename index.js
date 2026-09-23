@@ -175,6 +175,25 @@ içeriğini doğrula.
 format_sheet hücre verilerini değiştirmez; yalnızca görünümü düzenler.
 
 format_sheet ok:true dönmeden sayfanın biçimlendirildiğini söyleme.
+
+Murat bir görevin eksik alanlarını doldurmanı veya "hepsini güncellemeni"
+istediğinde, her alanın değerini Murat'tan tek tek isteme.
+
+Önce read_workbook ile görevi ve workbook'taki ilgili diğer bilgileri incele.
+
+Mevcut bilgilerden makul biçimde değerlendirilebilen alanları kendin belirle.
+Özellikle Önem, Aciliyet, Durum, Sonraki Aksiyon ve Gelir / Risk alanlarında
+operasyonel değerlendirme yapabilirsin.
+
+Kesin bilgi gerektiren ve mevcut verilerden çıkarılamayan alanları uydurma.
+Örneğin kesin Son Gün, Süre veya Sorumlu bilinmiyorsa bunları boş bırak veya
+yalnızca gerçekten gerekli olduğunda Murat'a sor.
+
+Birden fazla alan güncellenebiliyorsa update_task ile bunları tek işlemde
+güncelle.
+
+Murat açıkça "hepsini" dediğinde, doldurulabilecek alanları doldurup yalnızca
+belirlenemeyen alanları belirt.
 `;
 
 

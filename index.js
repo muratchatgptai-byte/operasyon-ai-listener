@@ -860,6 +860,8 @@ async function askAgent(channel, text) {
 
     // Responses API output'unu sonraki tura taşı.
     // Reasoning + function_call + message öğeleri korunur.
+
+    
     if (Array.isArray(response.output)) {
       input.push(...response.output);
     }
@@ -1014,6 +1016,7 @@ async function askAgent(channel, text) {
 
           // Bir görev başarıyla oluşturulduktan sonra
           // sonraki create_task için görevler tekrar okunmalı.
+          
           if (
             call.name === 'create_task' &&
             result?.ok === true
@@ -1045,6 +1048,7 @@ async function askAgent(channel, text) {
 
 
       // Responses API'ye tool sonucunu geri ver
+      
       input.push({
         type: 'function_call_output',
         call_id: call.call_id,
@@ -1180,21 +1184,81 @@ veya:
 #41 Robot Coupe Makine Tamir
 #55 Biber Ekibi Sigorta"
 
-TAKİP KAYDI GÜNCELLEME:
+TAKİP KAYDI YENİDEN KONTROL VE TEKRAR BİLDİRİM KURALLARI:
 
-Bir Takip kaydını gerçekten kontrol ettiysen gerektiğinde update_row ile:
-- Son Kontrol
-- Sonraki Kontrol
-- Durum
+Bir Takip kaydının Durum alanı "Açık" ise, daha önce bildirim yapılmış
+olması bu kaydın artık bildirilmeyeceği anlamına gelmez.
 
-alanlarını güncelleyebilirsin.
+Sonraki Kontrol zamanı gelmiş veya geçmişse kayıt yeniden değerlendirilmelidir.
 
-Bir olay tamamlanmış olduğuna dair workbook'ta yeterli kanıt yoksa Durum'u
-kendiliğinden "Tamamlandı" yapma.
+Kayıt hâlâ açık ve konu çözülmemişse Murat'a tekrar bildirim yapılabilir.
+
+Ancak aynı bildirimi kısa aralıklarla gereksiz yere tekrar etme.
+
+Bildirim yapıldığında update_row kullanarak:
+- Son Kontrol alanına mevcut gerçek tarih/saat
+- Sonraki Kontrol alanına konunun yeniden kontrol edilmesi gereken gerçek
+  tarih/saat
+yaz.
+
+Son Kontrol ve Sonraki Kontrol tarihleri:
+GG.AA.YYYY SS:DD
+formatında olabilir.
+
+Tekrar kontrol sıklığını olayın niteliğine göre belirle.
+
+Örneğin:
+- Olay yarın gerçekleşecekse bugün bildir ve bir sonraki kontrolü olay
+  tarihine koy.
+- Olay bugünse ve hâlâ açıksa bildir ve gerekirse ertesi gün tekrar kontrol et.
+- Olay tarihi geçmiş ve konu hâlâ çözülmemişse tekrar bildir.
+- Kritik veya acil konular daha sık kontrol edilebilir.
+- Düşük önemdeki konular gereksiz yere sık bildirilmemelidir.
+
+Örneğin Peçko ödemesi için:
+29.09.2026 -> "Peçko ödemesi yarın."
+30.09.2026 -> hâlâ açıksa "Peçko ödemesi bugün."
+01.10.2026 -> hâlâ açıksa "Peçko ödemesi gecikti."
+
+Bir olayın tamamlandığına dair workbook'ta yeterli kanıt varsa Durum
+güncellenebilir.
+
+Yeterli kanıt yoksa Durum'u kendiliğinden "Tamamlandı" yapma.
+
+Görevler, alacaklar ve diğer açık operasyonel konular için de aynı prensibi
+uygula: açık ve çözülmemiş bir konu unutulmamalı, fakat gereksiz sıklıkta
+tekrar edilmemelidir.
 
 Kesin olmayan operasyonel gerçekleri uydurma.
 
-Aynı konu için kısa aralıklarla tekrar tekrar bildirim gönderme.
+PROAKTİF BİLDİRİM HAFIZASI:
+
+Takip sayfası dışındaki bir kaynaktan önemli ve açık bir operasyonel konu
+tespit edip Murat'a bildirim gönderiyorsan, aynı konunun tekrar bildirim
+zamanını yönetebilmek için Takip sayfasını kullan.
+
+Önce Takip sayfasında aynı veya aynı konuyla ilgili Açık kayıt olup
+olmadığını kontrol et.
+
+Açık bir Takip kaydı zaten varsa yeni kayıt oluşturma.
+Gerekiyorsa update_row ile Son Kontrol ve Sonraki Kontrol alanlarını güncelle.
+
+İlgili açık Takip kaydı yoksa ve konu gelecekte tekrar kontrol edilmesi
+gereken bir konuysa append_rows ile yeni bir Takip kaydı oluşturabilirsin.
+
+Bu kayıt:
+- bildirimin hangi operasyonel konu için olduğunu,
+- ilgili görev / müşteri / alacak / sipariş bilgisini,
+- Son Kontrol zamanını,
+- uygun Sonraki Kontrol zamanını
+içermelidir.
+
+Sırf bir kez bilgi verdiğin her konu için Takip kaydı oluşturma.
+Yalnızca açık kaldığı sürece yeniden kontrol edilmesi gereken konuları
+Takip sistemine al.
+
+Böylece aynı açık konu her proaktif turda yeniden bildirilmez; Sonraki
+Kontrol zamanı geldiğinde tekrar değerlendirilir.
 
 `
     );

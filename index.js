@@ -1297,6 +1297,8 @@ Kontrol zamanı geldiğinde tekrar değerlendirilir.
 
 let lastProactiveSlot = '';
 
+let lastExactDueSignature = '';
+
 function getIstanbulClock() {
 
   const parts =
@@ -1331,10 +1333,175 @@ function getIstanbulClock() {
   };
 }
 
+// =========================================================
+// TAM SAATLİ TAKİP KONTROLÜ
+// =========================================================
+
+function parseTrackingDateTime(value) {
+
+  const text =
+    String(value || '').trim();
+
+  if (!text) {
+    return null;
+  }
+
+  const match =
+    text.match(
+      /^(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2}))?$/
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  const day =
+    Number(match[1]);
+
+  const month =
+    Number(match[2]);
+
+  const year =
+    Number(match[3]);
+
+  // Saat belirtilmemiş takipler sabah 08:30'da aktif olur.
+  const hour =
+    match[4] !== undefined
+      ? Number(match[4])
+      : 8;
+
+  const minute =
+    match[5] !== undefined
+      ? Number(match[5])
+      : 30;
+
+  return Date.UTC(
+    year,
+    month - 1,
+    day,
+    hour,
+    minute
+  );
+}
+
+
+function getCurrentIstanbulComparableTime() {
+
+  const now =
+    getIstanbulClock();
+
+  return Date.UTC(
+    now.year,
+    now.month - 1,
+    now.day,
+    now.hour,
+    now.minute
+  );
+}
+
+
+async function getDueTrackingSignature() {
+
+  const data =
+    await bridge('read_workbook');
+
+  const rows =
+    data?.workbook?.Takip?.rows || [];
+
+  if (
+    !Array.isArray(rows) ||
+    rows.length < 2
+  ) {
+    return '';
+  }
+
+  const headers =
+    rows[0].map(value =>
+      String(value || '').trim()
+    );
+
+  const noIndex =
+    headers.indexOf('#');
+
+  const statusIndex =
+    headers.indexOf('Durum');
+
+  const nextCheckIndex =
+    headers.indexOf('Sonraki Kontrol');
+
+  if (nextCheckIndex < 0) {
+    return '';
+  }
+
+  const now =
+    getCurrentIstanbulComparableTime();
+
+  const dueItems = [];
+
+  for (
+    let rowIndex = 1;
+    rowIndex < rows.length;
+    rowIndex++
+  ) {
+
+    const row =
+      rows[rowIndex];
+
+    if (!Array.isArray(row)) {
+      continue;
+    }
+
+    const status =
+      statusIndex >= 0
+        ? String(row[statusIndex] || '')
+            .trim()
+            .toLocaleLowerCase('tr-TR')
+        : '';
+
+    // Sadece açık takipler
+    if (
+      statusIndex >= 0 &&
+      status !== 'açık'
+    ) {
+      continue;
+    }
+
+    const nextCheckText =
+      String(
+        row[nextCheckIndex] || ''
+      ).trim();
+
+    const nextCheckTime =
+      parseTrackingDateTime(
+        nextCheckText
+      );
+
+    if (
+      nextCheckTime === null ||
+      nextCheckTime > now
+    ) {
+      continue;
+    }
+
+    const trackingNo =
+      noIndex >= 0
+        ? String(row[noIndex] || rowIndex)
+        : String(rowIndex);
+
+    dueItems.push(
+      `${trackingNo}:${nextCheckText}`
+    );
+  }
+
+  dueItems.sort();
+
+  return dueItems.join('|');
+}
 
 async function proactiveSchedulerTick() {
 
-  const now = getIstanbulClock();
+  const now =
+    getIstanbulClock();
 
   const dateKey =
     `${now.year}-${String(now.month).padStart(2, '0')}-${String(now.day).padStart(2, '0')}`;
@@ -1344,7 +1511,7 @@ async function proactiveSchedulerTick() {
 
 
   // -------------------------------------------------------
-  // SABAH GENEL KONTROLÜ
+  // SABAH GENEL KONTROLÜ - 08:30
   // -------------------------------------------------------
 
   if (
@@ -1360,7 +1527,7 @@ async function proactiveSchedulerTick() {
 
 
   // -------------------------------------------------------
-  // GÜN İÇİ KONTROLLER
+  // GÜN İÇİ GÜVENLİK KONTROLLERİ
   // -------------------------------------------------------
 
   const proactiveHours =
@@ -1380,26 +1547,88 @@ async function proactiveSchedulerTick() {
   }
 
 
+  // -------------------------------------------------------
+  // TAKİP SAYFASINDA TAM SAATLİ KONTROL VAR MI?
+  // -------------------------------------------------------
+
+  const dueSignature =
+    await getDueTrackingSignature();
+
+  let exactDue = false;
+
+  if (dueSignature) {
+
+    if (
+      dueSignature !== lastExactDueSignature
+    ) {
+
+      exactDue = true;
+
+      lastExactDueSignature =
+        dueSignature;
+
+    }
+
+  } else {
+
+    // Önceki takip artık zamanı geçmiş listede değil.
+    // Gelecekte yeniden tetiklenebilmesi için temizle.
+    lastExactDueSignature = '';
+
+  }
+
+
+  // -------------------------------------------------------
+  // TAM SAATLİ TAKİP ÖNCELİKLİDİR
+  // -------------------------------------------------------
+
+  if (exactDue) {
+
+    // Eğer aynı dakika rutin kontrol saatine de denk geldiyse
+    // bir dakika sonra ikinci kez çalışmasını engelle.
+    if (
+      shouldRun &&
+      slotName
+    ) {
+      lastProactiveSlot =
+        slotName;
+    }
+
+    console.log(
+      'Tam saatli takip kontrolü başlıyor:',
+      dueSignature
+    );
+
+    await runProactiveCheck();
+
+    return;
+  }
+
+
+  // -------------------------------------------------------
+  // RUTİN KONTROL
+  // -------------------------------------------------------
+
   if (!shouldRun) {
     return;
   }
 
-
-  // Aynı kontrol zamanında iki kez çalışmasın
-  if (lastProactiveSlot === slotName) {
+  if (
+    lastProactiveSlot === slotName
+  ) {
     return;
   }
 
-  lastProactiveSlot = slotName;
+  lastProactiveSlot =
+    slotName;
 
   console.log(
-    'Proaktif kontrol başlıyor:',
+    'Proaktif rutin kontrol başlıyor:',
     slotName
   );
 
   await runProactiveCheck();
 }
-
 
 // Her dakika saate bak.
 // OpenAI her dakika çağrılmaz.

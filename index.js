@@ -79,25 +79,9 @@ function seen(key) {
 // OPERASYON AI MANAGER PROMPT
 // ============================================================
 
-const nowTR = new Intl.DateTimeFormat(
-  'tr-TR',
-  {
-    timeZone: 'Europe/Istanbul',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }
-).format(new Date());
+
 
 const MANAGER_PROMPT = `
-
-Şu anki Türkiye tarih ve saati: ${nowTR}
-
-"bugün", "yarın", "1 hafta sonra", "cuma", "ayın sonunda" gibi göreli
-tarih ifadelerini hesaplarken bu tarih ve saati referans al.
 
 Sen Operasyon AI'sın; Murat'ın genel amaçlı işletme ve
 operasyon yöneticisisin.
@@ -816,6 +800,29 @@ async function openAI(messages) {
 
 async function askAgent(channel, text) {
 
+   const nowTR = new Intl.DateTimeFormat(
+    'tr-TR',
+    {
+      timeZone: 'Europe/Istanbul',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }
+  ).format(new Date());
+
+  const dynamicManagerPrompt = `
+Şu anki Türkiye tarih ve saati: ${nowTR}
+
+"bugün", "yarın", "1 hafta sonra", "3 dakika sonra", "cuma",
+"ayın sonunda" gibi göreli tarih ifadelerini hesaplarken bu tarih
+ve saati referans al.
+
+${MANAGER_PROMPT}
+`;
+
   const history =
     conversations.get(channel) || [];
 
@@ -826,7 +833,7 @@ async function askAgent(channel, text) {
 
     {
       role: 'system',
-      content: MANAGER_PROMPT
+      content: dynamicManagerPrompt
     },
 
     ...history.slice(-10),

@@ -314,7 +314,7 @@ const tools = [
     function: {
       name: 'update_task',
       description:
-        'Mevcut görevin izin verilen operasyon alanlarını günceller.',
+      'Mevcut bir görevin alanlarını günceller. Görev numarası (#) değiştirilemez.',
       parameters: {
         type: 'object',
         properties: {
@@ -326,7 +326,7 @@ const tools = [
           updates: {
             type: 'object',
             description:
-              'İzinli alanlar: Önem, Aciliyet, Son Gün, Süre, Sorumlu, Durum, Sonraki Aksiyon, Gelir / Risk.',
+            'İzinli alanlar: İş, Şirket, Ürün, Kategori, Önem, Aciliyet, Son Gün, Süre, Sorumlu, Durum, Sonraki Aksiyon, Gelir / Risk.',
             additionalProperties: {
               type: ['string', 'number', 'null']
             }

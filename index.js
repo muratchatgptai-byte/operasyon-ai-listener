@@ -239,21 +239,51 @@ adını yaz. Kişi belirlenemiyorsa isim uydurma.
 
 "Olay Tarihi" olayın gerçekleşmesi veya kontrol edilmesi beklenen tarihtir.
 
-Göreli tarihleri konuşmanın gerçekleştiği tarihe göre gerçek takvim tarihine
-çevir. Örneğin "1 hafta sonra", "yarın", "cuma" veya "ayın sonunda" gibi
-ifadeleri mümkün olduğunda gerçek tarihe dönüştür.
+Göreli tarih ifadelerini Takip sayfasına aynen yazma.
+"yarın", "1 hafta sonra", "cuma", "ayın sonunda" gibi ifadeleri
+konuşmanın gerçekleştiği tarihe göre gerçek takvim tarihine çevir.
 
-"Ön Uyarı" olaydan ne kadar önce Murat'ın bilgilendirilmesinin anlamlı
-olduğunu belirtir. Murat açıkça bir süre söylediyse onu kullan.
+Olay Tarihi mutlaka:
+GG.AA.YYYY
+
+Saat bilgisi varsa:
+GG.AA.YYYY SS:DD
+
+formatında kaydedilmelidir.
+
+Örneğin konuşma tarihi 23.09.2026 ise:
+"1 hafta sonra" -> 30.09.2026
+"yarın saat 14:00" -> 24.09.2026 14:00
+
+"Ön Uyarı" olaydan ne kadar önce uyarılması gerektiğini süre olarak belirtir.
+Örneğin:
+1 gün
+2 gün
+3 saat
+
+Murat açıkça bir ön uyarı süresi söylediyse onu kullan.
 Söylemediyse olayın niteliğine göre makul bir ön uyarı belirlenebilir.
-Kesin olmayan kritik bilgileri uydurma.
 
 "Durum" yeni takip kayıtlarında varsayılan olarak "Açık" olabilir.
 
 "Son Kontrol" henüz kontrol yapılmadıysa boş bırakılabilir.
 
-"Sonraki Kontrol" sistemin bu konuyu yeniden değerlendirmesi gereken zamanı
-ifade eder. Olay tarihi ve ön uyarı bilgisine göre uygun şekilde belirle.
+"Sonraki Kontrol" serbest metin değildir.
+Sistemin konuyu yeniden değerlendireceği gerçek tarih/saat olmalıdır.
+
+Sonraki Kontrol mutlaka:
+GG.AA.YYYY
+
+veya saat gerekiyorsa:
+GG.AA.YYYY SS:DD
+
+formatında kaydedilmelidir.
+
+Örneğin Olay Tarihi 30.09.2026 ve Ön Uyarı 1 gün ise
+Sonraki Kontrol 29.09.2026 olarak kaydedilir.
+
+Göreli ifadenin orijinali takip açısından önemliyse Not alanında
+saklanabilir.
 
 "Not" alanına takip açısından gerekli ek bağlamı kısa şekilde yaz.
 

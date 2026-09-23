@@ -1692,7 +1692,21 @@ setInterval(
 );
 
 
+// GEÇİCİ DOĞRUDAN SLACK BİLDİRİM TESTİ
+setTimeout(() => {
 
+  sendProactiveSlackMessage(
+    'DOĞRUDAN SLACK BİLDİRİM TESTİ'
+  ).catch(error => {
+
+    console.error(
+      'Doğrudan Slack bildirim testi hatası:',
+      error
+    );
+
+  });
+
+}, 30 * 1000);
 
 // ============================================================
 // SLACK MESSAGE HANDLER

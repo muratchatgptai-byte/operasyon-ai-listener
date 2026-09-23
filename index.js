@@ -1357,18 +1357,6 @@ setInterval(
 );
 
 
-// GEÇİCİ PROAKTİF TEST
-setTimeout(() => {
-
-  runProactiveCheck()
-    .catch(error => {
-      console.error(
-        'Geçici proaktif test hatası:',
-        error
-      );
-    });
-
-}, 15 * 1000);
 
 
 // ============================================================

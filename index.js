@@ -1174,7 +1174,50 @@ async function openAI(messages) {
 // AGENT
 // ============================================================
 
-async function askAgent(channel, text) {
+async function getRecentSlackHistory(channel, currentTs) {
+
+  if (!channel?.startsWith('D')) {
+    return [];
+  }
+
+  const result =
+    await app.client.conversations.history({
+      channel,
+      limit: 20
+    });
+
+  return (result.messages || [])
+    .filter(message => {
+
+      if (!message?.text) {
+        return false;
+      }
+
+      if (
+        currentTs &&
+        Number(message.ts) >= Number(currentTs)
+      ) {
+        return false;
+      }
+
+      return (
+        message.user === ALLOWED_USER_ID ||
+        Boolean(message.bot_id)
+      );
+
+    })
+    .reverse()
+    .map(message => ({
+      role:
+        message.user === ALLOWED_USER_ID
+          ? 'user'
+          : 'assistant',
+      content: message.text
+    }))
+    .slice(-10);
+}
+
+async function askAgent(channel, text, currentTs) {
 
    const nowTR = new Intl.DateTimeFormat(
     'tr-TR',
@@ -1199,8 +1242,16 @@ ve saati referans al.
 ${MANAGER_PROMPT}
 `;
 
-  const history =
-    conversations.get(channel) || [];
+  const memoryHistory =
+  conversations.get(channel) || [];
+
+const history =
+  memoryHistory.length
+    ? memoryHistory
+    : await getRecentSlackHistory(
+        channel,
+        currentTs
+      );
 
   let taskDataChecked = false;
 
@@ -2102,11 +2153,11 @@ app.event(
       );
 
 
-      const reply =
-        await askAgent(
-          event.channel,
-          text
-        );
+      await askAgent(
+  event.channel,
+  text,
+  event.ts
+);
 
 
       await client.chat.postMessage({

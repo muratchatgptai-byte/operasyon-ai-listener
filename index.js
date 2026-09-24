@@ -654,6 +654,49 @@ const tools = [
       additionalProperties: false
     }
   }
+},
+
+  {
+  type: 'function',
+  function: {
+    name: 'set_dropdown',
+    description:
+      'Mevcut bir Google Sheets sayfasındaki belirtilen hücre aralığına dropdown ekler.',
+    parameters: {
+      type: 'object',
+      properties: {
+
+        sheet_name: {
+          type: 'string'
+        },
+
+        target_range: {
+          type: 'string'
+        },
+
+        source_sheet_name: {
+          type: ['string', 'null']
+        },
+
+        source_range: {
+          type: ['string', 'null']
+        },
+
+        values: {
+          type: ['array', 'null'],
+          items: {
+            type: 'string'
+          }
+        }
+
+      },
+      required: [
+        'sheet_name',
+        'target_range'
+      ],
+      additionalProperties: false
+    }
+  }
 }
 
 ];
@@ -814,6 +857,21 @@ if (call.function.name === 'format_sheet') {
     'format_sheet',
     {
       sheet_name: args.sheet_name
+    }
+  );
+
+}
+
+if (call.function.name === 'set_dropdown') {
+
+  return bridge(
+    'set_dropdown',
+    {
+      sheet_name: args.sheet_name,
+      target_range: args.target_range,
+      source_sheet_name: args.source_sheet_name,
+      source_range: args.source_range,
+      values: args.values
     }
   );
 
@@ -1774,22 +1832,6 @@ setInterval(
   60 * 1000
 );
 
-
-// GEÇİCİ DOĞRUDAN SLACK BİLDİRİM TESTİ
-setTimeout(() => {
-
-  sendProactiveSlackMessage(
-    'DOĞRUDAN SLACK BİLDİRİM TESTİ'
-  ).catch(error => {
-
-    console.error(
-      'Doğrudan Slack bildirim testi hatası:',
-      error
-    );
-
-  });
-
-}, 30 * 1000);
 
 // ============================================================
 // SLACK MESSAGE HANDLER

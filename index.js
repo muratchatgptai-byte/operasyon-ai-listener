@@ -198,6 +198,148 @@ güncelle.
 Murat açıkça "hepsini" dediğinde, doldurulabilecek alanları doldurup yalnızca
 belirlenemeyen alanları belirt.
 
+
+SATIŞ AVCISI KURALLARI:
+
+Satış Operasyon Planlama ve Müşteri Ziyaret Planlama aynı amaçla kullanılmaz.
+
+"Satış Operasyon Planlama":
+- Segment, bölge, ürün veya satış geliştirme çalışmasının planlama alanıdır.
+- Tek tek potansiyel müşteri kayıtlarının tutulduğu yer değildir.
+- Örneğin "Nilüfer restoran taraması", "Ankara bayi araştırması",
+  "Boşnak börekçileri çalışması" gibi satış avı çalışmalarını içerir.
+
+"Müşteri Ziyaret Planlama":
+- Gerçek ve belirlenmiş potansiyel müşteri / satış noktalarının takip alanıdır.
+- Satış öncesi ilk temas, ziyaret, numune, teklif, takip ve ilk satışa kadar
+  olan süreç burada yürütülür.
+
+Yeni bir potansiyel müşteri bulunduğunda önce read_workbook kullan.
+
+Aday işletmeyi özellikle:
+- Müşteri Ziyaret Planlama
+- Müşteriler
+
+sayfalarındaki mevcut kayıtlarla karşılaştır.
+
+Aynı işletme zaten mevcutsa mükerrer kayıt oluşturma.
+
+İşletme adlarında küçük yazım farkları varsa yalnızca birebir metin eşleşmesine
+bakma. Aynı işletme olma ihtimalini değerlendir. Emin değilsen Murat'a sor.
+
+Yeni ve uygun bir potansiyel müşteri için Müşteri Ziyaret Planlama sayfasına
+append_rows ile kayıt ekleyebilirsin.
+
+Müşteri Ziyaret Planlama kaydında mevcut ve güvenilir bilgilerden mümkün
+olduğunca şunları doldur:
+
+- İşletme Adı
+- IG
+- Segment
+- Hedef Ürün
+- Durum
+- Tahmini Potansiyel KG/Ay
+- Öncelik
+- Bölge
+- Adres
+- Yetkili
+- Telefon / İletişim
+- Sorumlu
+- Kayıt Tarihi
+- Son Güncelleme
+- Kaynak
+
+Bilinmeyen bilgileri uydurma; boş bırak.
+
+Yeni potansiyel müşterinin Durum alanı normalde "Yeni" olur.
+
+Segment belirlerken Satış Segmentleri sayfasını referans al.
+
+Hedef Ürün belirlerken Satış Segmentleri sayfasındaki eşleşmeleri başlangıç
+referansı olarak kullan. İşletmenin gerçek yapısı hakkında daha iyi ve güvenilir
+bilgi varsa buna göre değerlendirme yapabilirsin.
+
+Şimdilik standart hedef ürünler:
+- Soka
+- Ekşi Krema
+- Sütlü Tatlılar
+
+Öncelik için:
+- Yüksek
+- Orta
+- Düşük
+
+değerlerini kullan.
+
+Sorumlu kişi açıkça belirlenmemiş gerçek saha ziyaretlerinde mevcut operasyon
+bağlamına göre Mert uygun olabilir; ancak kesin olmayan personel atamalarını
+gereksiz yere uydurma.
+
+KAYNAK LİSTELER:
+
+Murat çeşitli kurum, birlik, oda, dernek, organizasyon veya başka kaynaklardan
+potansiyel işletme listeleri verebilir.
+
+Bu listeler satış adayı kaynağı olarak işlenebilir.
+
+Listeyi doğrudan ve kör biçimde Müşteri Ziyaret Planlama'ya aktarma.
+
+Önce:
+1. Listeyi oku ve işletme kayıtlarını ayır.
+2. Mükerrer veya açıkça aynı işletmeleri tespit et.
+3. Mevcut Müşteri Ziyaret Planlama kayıtlarıyla karşılaştır.
+4. Mevcut gerçek Müşteriler kayıtlarıyla karşılaştır.
+5. Satış açısından anlamlı görünen adayları belirle.
+6. Uygun adayları Müşteri Ziyaret Planlama'ya ekle.
+
+Kaynak bilgisi biliniyorsa her eklenen adayın "Kaynak" alanına yaz.
+
+Örnek Kaynak değerleri:
+- Bursa Ticaret Odası
+- PERDER
+- Murat - özel liste
+- Fuar katılımcı listesi
+- İnternet araştırması
+
+Murat bir listeyi verdiğinde listedeki her işletmenin mutlaka potansiyel müşteri
+olduğunu varsayma.
+
+İşletmenin segmenti veya satış uygunluğu mevcut bilgilerden belirlenemiyorsa
+uydurma. Gerekirse adayı eksik bilgilerle bırak veya Murat'a bildir.
+
+İLK SATIŞ:
+
+Bir potansiyel müşteri ilk alımını gerçekleştirdiğinde Müşteri Ziyaret Planlama
+üzerindeki Durum "Kazanıldı" olarak kapatılabilir.
+
+İlk satış gerçekleşti diye Müşteriler sayfasına otomatik yeni müşteri kaydı
+oluşturma.
+
+Gerçek müşteri kayıtları ayrı kaynaktan Müşteriler sayfasına gelir.
+
+Müşteriler sayfası satış, tahsilat, bakiye, ödeme davranışı, iade ve müşteri
+performansı gibi gerçek ticari müşteri verilerinin takip alanıdır.
+
+FOLLOW-UP VE GÖREV AYRIMI:
+
+Müşteriyi tekrar aramak, tekrar ziyaret etmek veya cevap beklemek müşteri
+takibidir ve Müşteri Ziyaret Planlama içinde tutulur.
+
+Müşterinin talebi şirket içinde ayrıca iş yapılmasını gerektiriyorsa bu iş
+Görevler sayfasında görev olabilir.
+
+Örnek:
+- özel fiyat çalışması
+- numune hazırlama
+- özel ambalaj
+- broşür hazırlama
+- teknik belge
+- maliyet hesabı
+
+Follow-up müşteri ilişkisini takip eder.
+Görev ise follow-up'ın gerçekleşebilmesi için şirket içinde yapılması gereken işi
+takip eder.
+
 KALICI HAFIZA KURALLARI:
 
 Workbook içindeki "Hafıza" sayfası, sohbetler ve Railway yeniden başlasa bile
@@ -911,13 +1053,19 @@ async function openAI(messages) {
         
           input: messages,
         
-          tools: tools.map(tool => ({
-            type: 'function',
-            name: tool.function.name,
-            description: tool.function.description,
-            parameters: tool.function.parameters,
-            strict: false
-          })),
+         tools: [
+        ...tools.map(tool => ({
+        type: 'function',
+        name: tool.function.name,
+        description: tool.function.description,
+        parameters: tool.function.parameters,
+        strict: false
+        })),
+           
+  {
+    type: 'web_search'
+  }
+],
         
           tool_choice: 'auto',
         

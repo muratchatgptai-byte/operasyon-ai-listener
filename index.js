@@ -2153,11 +2153,12 @@ app.event(
       );
 
 
-      await askAgent(
-  event.channel,
-  text,
-  event.ts
-);
+     const reply =
+  await askAgent(
+    event.channel,
+    text,
+    event.ts
+  );
 
 
       await client.chat.postMessage({

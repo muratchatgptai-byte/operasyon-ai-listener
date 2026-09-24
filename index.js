@@ -1217,7 +1217,64 @@ async function getRecentSlackHistory(channel, currentTs) {
     .slice(-10);
 }
 
-async function askAgent(channel, text, currentTs) {
+async function getSlackImageInputs(event) {
+
+  const files =
+    Array.isArray(event?.files)
+      ? event.files
+      : [];
+
+  const images = [];
+
+  for (const file of files.slice(0, 4)) {
+
+    const mime =
+      String(file?.mimetype || '');
+
+    if (!mime.startsWith('image/')) {
+      continue;
+    }
+
+    const url =
+      file.url_private_download ||
+      file.url_private;
+
+    if (!url) {
+      continue;
+    }
+
+    const response =
+      await fetch(url, {
+        headers: {
+          Authorization:
+            `Bearer ${SLACK_BOT_TOKEN}`
+        }
+      });
+
+    if (!response.ok) {
+      throw new Error(
+        `Slack görseli indirilemedi: HTTP ${response.status}`
+      );
+    }
+
+    const bytes =
+      Buffer.from(
+        await response.arrayBuffer()
+      );
+
+    const dataUrl =
+      `data:${mime};base64,${bytes.toString('base64')}`;
+
+    images.push({
+      type: 'input_image',
+      image_url: dataUrl
+    });
+  }
+
+  return images;
+}
+
+async function askAgent(channel, text, currentTs, imageInputs = []) {
 
    const nowTR = new Intl.DateTimeFormat(
     'tr-TR',
@@ -1266,9 +1323,15 @@ const history =
     ...history.slice(-10),
 
     {
-      role: 'user',
-      content: text
-    }
+  role: 'user',
+  content: [
+    {
+      type: 'input_text',
+      text: text || 'Bu görseli incele.'
+    },
+    ...imageInputs
+  ]
+}
 
   ];
 
@@ -2114,28 +2177,37 @@ app.event(
     try {
 
       if (
-        !event ||
-        event.subtype ||
-        event.bot_id ||
-        !event.channel?.startsWith('D') ||
-        event.user !== ALLOWED_USER_ID
-      ) {
-        return;
-      }
+  !event ||
+  (
+    event.subtype &&
+    event.subtype !== 'file_share'
+  ) ||
+  event.bot_id ||
+  !event.channel?.startsWith('D') ||
+  event.user !== ALLOWED_USER_ID
+) {
+  return;
+}
 
 
       const text =
         (event.text || '').trim();
 
+      const imageInputs =
+  await getSlackImageInputs(event);
 
-      if (
-        !text ||
-        seen(
-          `${event.channel}:${event.ts}`
-        )
-      ) {
-        return;
-      }
+
+     if (
+  (
+    !text &&
+    !imageInputs.length
+  ) ||
+  seen(
+    `${event.channel}:${event.ts}`
+  )
+) {
+  return;
+}
 
 
       console.log(
@@ -2157,7 +2229,8 @@ app.event(
   await askAgent(
     event.channel,
     text,
-    event.ts
+    event.ts,
+    imageInputs
   );
 
 

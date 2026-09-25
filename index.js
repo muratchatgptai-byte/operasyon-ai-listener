@@ -214,7 +214,14 @@ Satış Operasyon Planlama ve Müşteri Ziyaret Planlama aynı amaçla kullanıl
 - Satış öncesi ilk temas, ziyaret, numune, teklif, takip ve ilk satışa kadar
   olan süreç burada yürütülür.
 
-Yeni bir potansiyel müşteri bulunduğunda önce read_workbook kullan.
+Satış Avcısı araştırmalarında tüm workbook'u okumak için read_workbook kullanma.
+
+Bunun yerine read_sheets kullanarak yalnızca şu sayfaları oku:
+- Müşteri Ziyaret Planlama
+- Müşteriler
+- Satış Segmentleri
+
+Rakip bilgisi gerçekten gerekiyorsa ayrıca Rakip Analizi sayfasını iste.
 
 Aday işletmeyi özellikle:
 - Müşteri Ziyaret Planlama
@@ -640,6 +647,28 @@ const tools = [
   },
 
   {
+  type: 'function',
+  function: {
+    name: 'read_sheets',
+    description:
+      'Workbook içinden yalnızca belirtilen sayfaları getirir. Belirli bir operasyon için tüm workbook yerine gerekli sayfaları okumak gerektiğinde kullanılır.',
+    parameters: {
+      type: 'object',
+      properties: {
+        sheet_names: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
+        }
+      },
+      required: ['sheet_names'],
+      additionalProperties: false
+    }
+  }
+},
+
+  {
     type: 'function',
     function: {
       name: 'list_tasks',
@@ -1006,6 +1035,29 @@ async function executeTool(call) {
     return bridge('read_workbook');
 
   }
+
+  if (call.function.name === 'read_sheets') {
+
+  const data =
+    await bridge('read_workbook');
+
+  const selected = {};
+
+  for (const sheetName of args.sheet_names || []) {
+
+    if (data?.workbook?.[sheetName]) {
+      selected[sheetName] =
+        data.workbook[sheetName];
+    }
+
+  }
+
+  return {
+    ok: true,
+    workbook: selected
+  };
+
+}
 
 
   if (call.function.name === 'list_tasks') {

@@ -1397,6 +1397,20 @@ const history =
     const response =
       await openAI(input);
 
+    console.log(
+  JSON.stringify({
+    type: 'openai_response_debug',
+    status: response?.status,
+    incomplete_details:
+      response?.incomplete_details || null,
+    usage:
+      response?.usage || null,
+    output_types:
+      (response?.output || []).map(
+        item => item.type
+      )
+  })
+);
 
     if (!response) {
 

@@ -1193,7 +1193,7 @@ async function openAI(messages) {
           tool_choice: 'auto',
         
           reasoning: {
-            effort: 'high'
+            effort: 'medium'
           },
         
           max_output_tokens: 4000

@@ -1092,11 +1092,89 @@ if (call.function.name === 'create_task') {
 
 if (call.function.name === 'append_rows') {
 
+  let rows = args.rows;
+
+  // Müşteri Ziyaret Planlama için Index otomatik verilir.
+  if (
+    args.sheet_name === 'Müşteri Ziyaret Planlama' &&
+    Array.isArray(rows) &&
+    rows.length
+  ) {
+
+    const data =
+      await bridge('read_workbook');
+
+    const existingRows =
+      data?.workbook?.['Müşteri Ziyaret Planlama']?.rows || [];
+
+    const headers =
+      Array.isArray(existingRows[0])
+        ? existingRows[0]
+        : [];
+
+    const indexColumn =
+      headers.findIndex(
+        value =>
+          String(value || '')
+            .trim()
+            .toLocaleLowerCase('tr-TR') === 'index'
+      );
+
+    if (indexColumn >= 0) {
+
+      let maxIndex = 0;
+
+      for (let i = 1; i < existingRows.length; i++) {
+
+        const value =
+          Number(existingRows[i]?.[indexColumn]);
+
+        if (
+          Number.isFinite(value) &&
+          value > maxIndex
+        ) {
+          maxIndex = value;
+        }
+      }
+
+      rows = rows.map(
+        (row, offset) => {
+
+          const newRow =
+            Array.isArray(row)
+              ? [...row]
+              : [];
+
+          const newIndex =
+            maxIndex + offset + 1;
+
+          // AI Index kolonunu göndermediyse doğru yere ekle.
+          if (newRow.length < headers.length) {
+
+            newRow.splice(
+              indexColumn,
+              0,
+              newIndex
+            );
+
+          } else {
+
+            // AI Index göndermiş olsa bile numarayı sistem belirler.
+            newRow[indexColumn] =
+              newIndex;
+          }
+
+          return newRow;
+        }
+      );
+    }
+  }
+
   return bridge(
     'append_rows',
     {
       sheet_name: args.sheet_name,
-      rows: args.rows
+      rows
     }
   );
 

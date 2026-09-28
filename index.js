@@ -1160,7 +1160,7 @@ if (call.function.name === 'add_sales_prospects') {
       value =>
         String(value || '')
           .trim()
-          .toLocaleLowerCase('tr-TR') === 'index'
+          .toLowerCase() === 'index'
     );
 
   let maxIndex = 0;
@@ -1210,13 +1210,35 @@ if (call.function.name === 'add_sales_prospects') {
       }
     );
 
-  return bridge(
+const appendResult =
+  await bridge(
     'append_rows',
     {
       sheet_name: 'Müşteri Ziyaret Planlama',
       rows
     }
   );
+
+try {
+
+  await bridge(
+    'format_sheet',
+    {
+      sheet_name: 'Müşteri Ziyaret Planlama'
+    }
+  );
+
+} catch (error) {
+
+  console.error(
+    'sales_prospect_format_error',
+    error?.message || error
+  );
+}
+
+return appendResult;
+
+  
 }
 
   

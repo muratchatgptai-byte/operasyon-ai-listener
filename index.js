@@ -235,7 +235,8 @@ Aynı işletme zaten mevcutsa mükerrer kayıt oluşturma.
 bakma. Aynı işletme olma ihtimalini değerlendir. Emin değilsen Murat'a sor.
 
 Yeni ve uygun bir potansiyel müşteri için Müşteri Ziyaret Planlama sayfasına
-append_rows ile kayıt ekleyebilirsin.
+yalnızca add_sales_prospects ile kayıt ekle.
+Müşteri Ziyaret Planlama için append_rows kullanma.
 
 Müşteri Ziyaret Planlama kaydında mevcut ve güvenilir bilgilerden mümkün
 olduğunca şunları doldur:
@@ -831,6 +832,51 @@ const tools = [
     }
   },
 
+{
+  type: 'function',
+  function: {
+    name: 'add_sales_prospects',
+    description:
+      'Müşteri Ziyaret Planlama sayfasına yeni satış adaylarını kolon adlarına göre güvenli şekilde ekler.',
+    parameters: {
+      type: 'object',
+      properties: {
+        records: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              'İşletme Adı': { type: 'string' },
+              'IG': { type: ['string', 'null'] },
+              'Segment': { type: ['string', 'null'] },
+              'Hedef Ürün': { type: ['string', 'null'] },
+              'Durum': { type: ['string', 'null'] },
+              'Tahmini Potansiyel KG/Ay': { type: ['string', 'number', 'null'] },
+              'Öncelik': { type: ['string', 'null'] },
+              'Bölge': { type: ['string', 'null'] },
+              'Adres': { type: ['string', 'null'] },
+              'Yetkili': { type: ['string', 'null'] },
+              'Telefon / İletişim': { type: ['string', 'null'] },
+              'Son Temas Tarihi': { type: ['string', 'null'] },
+              'Son Görüşme / Sonuç': { type: ['string', 'null'] },
+              'Sonraki Aksiyon': { type: ['string', 'null'] },
+              'Follow-up Tarihi': { type: ['string', 'null'] },
+              'Sorumlu': { type: ['string', 'null'] },
+              'Kayıt Tarihi': { type: ['string', 'null'] },
+              'Kaynak': { type: ['string', 'null'] },
+              'Son Güncelleme': { type: ['string', 'null'] }
+            },
+            required: ['İşletme Adı'],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ['records'],
+      additionalProperties: false
+    }
+  }
+},
+  
   {
     type: 'function',
     function: {
@@ -1089,7 +1135,91 @@ if (call.function.name === 'create_task') {
 
 }
 
+if (call.function.name === 'add_sales_prospects') {
 
+  const data =
+    await bridge('read_workbook');
+
+  const existingRows =
+    data?.workbook?.['Müşteri Ziyaret Planlama']?.rows || [];
+
+  const headers =
+    Array.isArray(existingRows[0])
+      ? existingRows[0]
+      : [];
+
+  if (!headers.length) {
+    return {
+      ok: false,
+      error: 'Müşteri Ziyaret Planlama başlıkları okunamadı'
+    };
+  }
+
+  const indexColumn =
+    headers.findIndex(
+      value =>
+        String(value || '')
+          .trim()
+          .toLocaleLowerCase('tr-TR') === 'index'
+    );
+
+  let maxIndex = 0;
+
+  if (indexColumn >= 0) {
+
+    for (let i = 1; i < existingRows.length; i++) {
+
+      const value =
+        Number(existingRows[i]?.[indexColumn]);
+
+      if (
+        Number.isFinite(value) &&
+        value > maxIndex
+      ) {
+        maxIndex = value;
+      }
+    }
+  }
+
+  const rows =
+    (args.records || []).map(
+      (record, offset) => {
+
+        return headers.map(
+          (header, columnIndex) => {
+
+            if (columnIndex === indexColumn) {
+              return maxIndex + offset + 1;
+            }
+
+            const key =
+              String(header || '').trim();
+
+            if (
+              Object.prototype.hasOwnProperty.call(
+                record,
+                key
+              )
+            ) {
+              return record[key] ?? '';
+            }
+
+            return '';
+          }
+        );
+      }
+    );
+
+  return bridge(
+    'append_rows',
+    {
+      sheet_name: 'Müşteri Ziyaret Planlama',
+      rows
+    }
+  );
+}
+
+  
 if (call.function.name === 'append_rows') {
 
   let rows = args.rows;
@@ -1429,16 +1559,11 @@ ve saati referans al.
 ${MANAGER_PROMPT}
 `;
 
-  const memoryHistory =
-  conversations.get(channel) || [];
-
-const history =
-  memoryHistory.length
-    ? memoryHistory
-    : await getRecentSlackHistory(
-        channel,
-        currentTs
-      );
+ const history =
+  await getRecentSlackHistory(
+    channel,
+    currentTs
+  );
 
   let taskDataChecked = false;
 

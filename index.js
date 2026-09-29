@@ -904,6 +904,20 @@ const tools = [
   }
 },
   
+
+  {
+  type: 'function',
+  function: {
+    name: 'archive_terminal_sales_prospects',
+    description:
+      'Müşteri Ziyaret Planlama içindeki Durum alanı Kazanıldı veya Olmadı olan tüm kayıtları tek seferde Müşteri Ziyaret Arşiv sayfasına taşır.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false
+    }
+  }
+},
   
   {
     type: 'function',
@@ -1280,6 +1294,16 @@ return appendResult;
   );
 }
   
+if (
+  call.function.name ===
+  'archive_terminal_sales_prospects'
+) {
+
+  return bridge(
+    'archive_terminal_sales_prospects'
+  );
+}
+
   
 if (call.function.name === 'append_rows') {
 

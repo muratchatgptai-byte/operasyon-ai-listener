@@ -165,6 +165,21 @@ Tahsilat ve alacak operasyonlarında:
 AT Master ve Alacak Takip içinde aynı müşteri bulunuyorsa,
 güncelleme hedefi olarak Alacak Takip'i kullan.
 
+Alacak Takip için kısa tarih güncelleme kuralı:
+
+Murat yalnızca müşteri adı + tarih yazarsa, örneğin:
+"Barben 07.11.2026"
+"Organic Gd - 07.11.2026"
+
+bu tarih "Ödeme Yapılması Gereken Tarih" alanına yazılır.
+
+"Yeni Ödeme Tarihi" alanını yalnızca Murat açıkça
+"yeni ödeme tarihi", "yeni tarih", "ödeme sözünü şu tarihe verdi"
+veya benzer şekilde yeni/ertelenmiş ödeme tarihini belirttiğinde kullan.
+
+Sadece müşteri adı + tarih verilen kısa komutta
+"Yeni Ödeme Tarihi" alanını kullanma.
+
 update_row kullanırken değiştirilmek istenen kaydın hangi
 satırda ve ilgili bilginin hangi sütunda olduğunu workbook
 verisinden belirle. Belirsiz eşleşmede tahmin etme; Murat'a sor.

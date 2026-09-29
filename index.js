@@ -151,6 +151,20 @@ append_rows veya update_row kullanmadan önce read_workbook
 ile güncel workbook'u oku. Doğru sayfayı ve mevcut veriyi
 doğrula.
 
+AT Master sayfası yalnızca kaynak/doğrulama amacıyla okunabilir.
+
+AT Master üzerinde hiçbir koşulda append_rows veya update_row kullanma.
+AT Master'daki hiçbir hücreyi değiştirmeye çalışma.
+
+Tahsilat ve alacak operasyonlarında:
+- AT Master yalnızca mevcut kaynak veriyi doğrulamak için kullanılır.
+- Kullanıcının yaptığı tahsilat takibi, ödeme tarihi, aranma tarihi,
+  yeni ödeme tarihi, risk durumu, görüşme notu veya benzeri çalışma
+  güncellemeleri yalnızca Alacak Takip sayfasına yazılır.
+
+AT Master ve Alacak Takip içinde aynı müşteri bulunuyorsa,
+güncelleme hedefi olarak Alacak Takip'i kullan.
+
 update_row kullanırken değiştirilmek istenen kaydın hangi
 satırda ve ilgili bilginin hangi sütunda olduğunu workbook
 verisinden belirle. Belirsiz eşleşmede tahmin etme; Murat'a sor.

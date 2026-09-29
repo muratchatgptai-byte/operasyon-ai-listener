@@ -1,6 +1,7 @@
 'use strict';
 
 const { App } = require('@slack/bolt');
+const http = require('http');
 
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
 const SLACK_APP_TOKEN = process.env.SLACK_APP_TOKEN;
@@ -18,6 +19,19 @@ const SHEET_BRIDGE_SECRET =
   process.env.SHEET_BRIDGE_SECRET ||
   process.env.SHEETS_BRIDGE_SECRET;
 
+const PORT = Number(process.env.PORT || 3000);
+
+const WHATSAPP_VERIFY_TOKEN =
+  process.env.WHATSAPP_VERIFY_TOKEN || '';
+
+const WHATSAPP_ACCESS_TOKEN =
+  process.env.WHATSAPP_ACCESS_TOKEN || '';
+
+const WHATSAPP_PHONE_NUMBER_ID =
+  process.env.WHATSAPP_PHONE_NUMBER_ID || '';
+
+const META_GRAPH_VERSION =
+  process.env.META_GRAPH_VERSION || '';
 
 // ============================================================
 // REQUIRED VARIABLES
@@ -1688,11 +1702,13 @@ ve saati referans al.
 ${MANAGER_PROMPT}
 `;
 
- const history =
-  await getRecentSlackHistory(
-    channel,
-    currentTs
-  );
+const history =
+  channel?.startsWith('D')
+    ? await getRecentSlackHistory(
+        channel,
+        currentTs
+      )
+    : (conversations.get(channel) || []);
 
   let taskDataChecked = false;
 
@@ -2733,6 +2749,351 @@ app.error(
       'slack_bolt_error',
       error
     )
+);
+
+
+// ============================================================
+// WHATSAPP
+// ============================================================
+
+async function sendWhatsAppText(to, text) {
+
+  if (
+    !WHATSAPP_ACCESS_TOKEN ||
+    !WHATSAPP_PHONE_NUMBER_ID ||
+    !META_GRAPH_VERSION
+  ) {
+    throw new Error(
+      'WhatsApp environment variables eksik'
+    );
+  }
+
+  const response =
+    await fetch(
+      `https://graph.facebook.com/${META_GRAPH_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: 'POST',
+
+        headers: {
+          Authorization:
+            `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          'Content-Type':
+            'application/json'
+        },
+
+        body: JSON.stringify({
+          messaging_product:
+            'whatsapp',
+
+          recipient_type:
+            'individual',
+
+          to,
+
+          type:
+            'text',
+
+          text: {
+            preview_url: false,
+            body:
+              String(text || '')
+          }
+        })
+      }
+    );
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if (!response.ok) {
+
+    throw new Error(
+      `WhatsApp gönderim hatası HTTP ${response.status}: ${JSON.stringify(data)}`
+    );
+
+  }
+
+  return data;
+}
+
+
+async function handleWhatsAppWebhook(body) {
+
+  const entries =
+    Array.isArray(body?.entry)
+      ? body.entry
+      : [];
+
+  for (const entry of entries) {
+
+    const changes =
+      Array.isArray(entry?.changes)
+        ? entry.changes
+        : [];
+
+    for (const change of changes) {
+
+      const messages =
+        Array.isArray(
+          change?.value?.messages
+        )
+          ? change.value.messages
+          : [];
+
+      for (const message of messages) {
+
+        if (
+          message?.type !== 'text' ||
+          !message?.from ||
+          !message?.text?.body
+        ) {
+          continue;
+        }
+
+        const messageId =
+          String(
+            message.id || ''
+          );
+
+        if (
+          messageId &&
+          seen(
+            `wa:${messageId}`
+          )
+        ) {
+          continue;
+        }
+
+        const waId =
+          String(
+            message.from
+          );
+
+        const text =
+          String(
+            message.text.body
+          ).trim();
+
+        if (!text) {
+          continue;
+        }
+
+        console.log(
+          JSON.stringify({
+            type:
+              'whatsapp_message_received',
+            wa_id:
+              waId,
+            message_id:
+              messageId,
+            text
+          })
+        );
+
+        const reply =
+          await askAgent(
+            `wa:${waId}`,
+            text,
+            message.timestamp ||
+              messageId,
+            []
+          );
+
+        await sendWhatsAppText(
+          waId,
+          reply
+        );
+
+        console.log(
+          JSON.stringify({
+            type:
+              'whatsapp_reply_sent',
+            wa_id:
+              waId,
+            message_id:
+              messageId
+          })
+        );
+
+      }
+
+    }
+
+  }
+
+}
+
+
+const httpServer =
+  http.createServer(
+    (req, res) => {
+
+      const url =
+        new URL(
+          req.url || '/',
+          `http://${req.headers.host || 'localhost'}`
+        );
+
+
+      // --------------------------------------------
+      // HEALTH
+      // --------------------------------------------
+
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/'
+      ) {
+
+        res.writeHead(
+          200,
+          {
+            'Content-Type':
+              'text/plain'
+          }
+        );
+
+        res.end(
+          'Operasyon AI OK'
+        );
+
+        return;
+      }
+
+
+      // --------------------------------------------
+      // META WEBHOOK VERIFICATION
+      // --------------------------------------------
+
+      if (
+        req.method === 'GET' &&
+        url.pathname ===
+          '/whatsapp/webhook'
+      ) {
+
+        const mode =
+          url.searchParams.get(
+            'hub.mode'
+          );
+
+        const token =
+          url.searchParams.get(
+            'hub.verify_token'
+          );
+
+        const challenge =
+          url.searchParams.get(
+            'hub.challenge'
+          );
+
+        if (
+          mode === 'subscribe' &&
+          token &&
+          token ===
+            WHATSAPP_VERIFY_TOKEN
+        ) {
+
+          res.writeHead(200);
+
+          res.end(
+            challenge || ''
+          );
+
+          return;
+        }
+
+        res.writeHead(403);
+        res.end('Forbidden');
+
+        return;
+      }
+
+
+      // --------------------------------------------
+      // WHATSAPP INCOMING MESSAGE
+      // --------------------------------------------
+
+      if (
+        req.method === 'POST' &&
+        url.pathname ===
+          '/whatsapp/webhook'
+      ) {
+
+        let raw = '';
+
+        req.on(
+          'data',
+          chunk => {
+            raw += chunk;
+          }
+        );
+
+        req.on(
+          'end',
+          () => {
+
+            let body;
+
+            try {
+
+              body =
+                JSON.parse(
+                  raw || '{}'
+                );
+
+            } catch (_) {
+
+              res.writeHead(400);
+              res.end(
+                'Invalid JSON'
+              );
+
+              return;
+            }
+
+            // Meta'ya hemen 200 dön.
+            res.writeHead(200);
+            res.end(
+              'EVENT_RECEIVED'
+            );
+
+            handleWhatsAppWebhook(
+              body
+            ).catch(error => {
+
+              console.error(
+                'whatsapp_webhook_error',
+                error?.message ||
+                  error
+              );
+
+            });
+
+          }
+        );
+
+        return;
+      }
+
+
+      res.writeHead(404);
+      res.end('Not Found');
+
+    }
+  );
+
+
+httpServer.listen(
+  PORT,
+  '0.0.0.0',
+  () => {
+
+    console.log(
+      `HTTP server listening on port ${PORT}`
+    );
+
+  }
 );
 
 

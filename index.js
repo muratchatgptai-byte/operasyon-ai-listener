@@ -1294,14 +1294,29 @@ return appendResult;
   );
 }
   
-if (
+
+  if (
   call.function.name ===
   'archive_terminal_sales_prospects'
 ) {
 
-  return bridge(
-    'archive_terminal_sales_prospects'
-  );
+  const archiveResult =
+    await bridge(
+      'archive_terminal_sales_prospects'
+    );
+
+  if (archiveResult?.ok === true) {
+
+    await bridge(
+      'format_sheet',
+      {
+        sheet_name:
+          'Müşteri Ziyaret Arşiv'
+      }
+    );
+  }
+
+  return archiveResult;
 }
 
   

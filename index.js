@@ -1735,13 +1735,38 @@ ${MANAGER_PROMPT}
     // TOOL ÇAĞRILARINI ÇALIŞTIR
     // =========================================================
 
+    const toolResultCache = new Map();
+    
     for (const call of toolCalls) {
 
       let result;
 
+      const toolCacheKey =
+      `${call.name}:${call.arguments || '{}'}`;
 
+      const duplicateRead =
+      (
+        call.name === 'read_sheets' ||
+        call.name === 'read_workbook' ||
+        call.name === 'list_tasks'
+      ) &&
+      toolResultCache.has(toolCacheKey);
+      
       try {
 
+      if (duplicateRead) {
+
+        result = {
+          ok: true,
+          duplicate: true,
+          message:
+            'Aynı okuma bu turda zaten yapıldı. Önceki tool sonucunu kullan.'
+        };
+      
+      }
+      
+      else
+        
         // -----------------------------------------------------
         // Yeni görev oluşturulmadan önce görev verisi okunmalı
         // -----------------------------------------------------
@@ -1825,7 +1850,21 @@ ${MANAGER_PROMPT}
 
       }
 
-
+      if (
+  !duplicateRead &&
+  result?.ok === true &&
+  (
+    call.name === 'read_sheets' ||
+    call.name === 'read_workbook' ||
+    call.name === 'list_tasks'
+  )
+) {
+  toolResultCache.set(
+    toolCacheKey,
+    result
+  );
+}
+      
       console.log(
         JSON.stringify({
           type: 'tool_call',

@@ -876,6 +876,29 @@ const tools = [
     }
   }
 },
+
+
+  {
+  type: 'function',
+  function: {
+    name: 'archive_sales_prospect',
+    description:
+      'Müşteri Ziyaret Planlama içindeki Kazanıldı veya Olmadı durumundaki bir satış adayını Müşteri Ziyaret Arşiv sayfasına taşır.',
+    parameters: {
+      type: 'object',
+      properties: {
+        row_number: {
+          type: 'integer',
+          description:
+            'Müşteri Ziyaret Planlama sayfasındaki gerçek satır numarası.'
+        }
+      },
+      required: ['row_number'],
+      additionalProperties: false
+    }
+  }
+},
+  
   
   {
     type: 'function',
@@ -1241,6 +1264,17 @@ return appendResult;
   
 }
 
+
+  if (call.function.name === 'archive_sales_prospect') {
+
+  return bridge(
+    'archive_sales_prospect',
+    {
+      row_number: args.row_number
+    }
+  );
+}
+  
   
 if (call.function.name === 'append_rows') {
 

@@ -803,8 +803,12 @@ ile güncel veriyi oku ve doğru mesajı hazırla.
 
 send_whatsapp_message ok:true dönmeden mesajın gönderildiğini söyleme.
 
-Operasyon AI'nın Railway zaman motoru üzerinden Murat'a kullanıcı mesajı
-olmadan proaktif Slack mesajı gönderme yeteneği vardır.
+Operasyon AI'nın Railway zaman motoru üzerinden kayıtlı WhatsApp
+kullanıcılarına kullanıcı mesajı olmadan proaktif WhatsApp bildirimi
+gönderme yeteneği vardır.
+
+Şimdilik otomatik proaktif bildirimler aynı içerikle
+Murat, Kerim ve Kadir'e gönderilir.
 
 Bu nedenle Murat zamanlı/proaktif bildirimlerin çalışıp çalışmadığını
 sorduğunda "kendiliğimden mesaj gönderemem" veya benzeri ifadeler kullanma.
@@ -2252,28 +2256,57 @@ let proactiveCheckRunning = false;
 
 
 // ---------------------------------------------------------
-// MURAT'A SLACK DM GÖNDER
+// PROAKTİF WHATSAPP BİLDİRİMİ
 // ---------------------------------------------------------
 
-async function sendProactiveSlackMessage(text) {
+async function sendProactiveWhatsAppMessage(text) {
 
-  const opened = await app.client.conversations.open({
-    users: ALLOWED_USER_ID
-  });
+  const targets =
+    getWhatsAppTargetIds('herkes');
 
-  const channelId =
-    opened?.channel?.id;
-
-  if (!channelId) {
+  if (!targets.length) {
     throw new Error(
-      'Proaktif mesaj için Slack DM kanalı açılamadı.'
+      'Proaktif WhatsApp alıcısı bulunamadı.'
     );
   }
 
-  await app.client.chat.postMessage({
-    channel: channelId,
-    text: text
-  });
+  const results =
+    await Promise.allSettled(
+      targets.map(
+        waId =>
+          sendWhatsAppText(
+            waId,
+            text
+          )
+      )
+    );
+
+  const failedCount =
+    results.filter(
+      result =>
+        result.status === 'rejected'
+    ).length;
+
+  const sentCount =
+    results.length -
+    failedCount;
+
+  console.log(
+    JSON.stringify({
+      type:
+        'proactive_whatsapp_sent',
+      sent_count:
+        sentCount,
+      failed_count:
+        failedCount
+    })
+  );
+
+  if (sentCount === 0) {
+    throw new Error(
+      'Proaktif WhatsApp bildirimi hiçbir alıcıya gönderilemedi.'
+    );
+  }
 }
 
 
@@ -2470,9 +2503,9 @@ Kontrol zamanı geldiğinde tekrar değerlendirilir.
       return;
     }
 
-    await sendProactiveSlackMessage(
-      message
-    );
+    await sendProactiveWhatsAppMessage(
+  message
+);
 
   } catch (error) {
 

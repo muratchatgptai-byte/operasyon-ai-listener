@@ -1173,14 +1173,7 @@ const tools = [
     }
   },
 
-        args.date,
-
-      field:
-        args.field
-    }
-  );
-}
-2) Satır 1156 — update_row tool tanımının hemen ALTINA
+       
 {
   type: 'function',
   function: {

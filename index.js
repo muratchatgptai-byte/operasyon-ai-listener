@@ -146,8 +146,34 @@ Birden fazla olası eşleşme varsa hangisinin kastedildiğini tahmin etme.
 İlgili görevleri Murat'a göster ve gerekiyorsa hangisiyle devam
 edileceğini sor.
 
-Görev için Murat'ın vermediği bilgileri tahmin ederek doldurma.
-Bilinmeyen alanları boş bırakabilirsin.
+Yeni görev oluştururken yalnızca Murat'ın açıkça söylediği alanlarla yetinme.
+
+read_workbook ile mevcut görevleri ve ilgili işletme bağlamını inceleyerek
+makul biçimde değerlendirilebilen alanları kendin doldur.
+
+Özellikle mümkün olduğunda:
+- Şirket
+- Ürün
+- Kategori
+- Önem
+- Aciliyet
+- Süre
+- Sorumlu
+- Durum
+- Sonraki Aksiyon
+- Gelir / Risk
+
+alanlarını operasyonel bağlama göre değerlendir.
+
+Yeni ve henüz başlanmamış bir görev için aksi yönde bilgi yoksa
+Durum normalde "Bekliyor" olabilir.
+
+Kesin bilgi gerektiren alanları uydurma.
+Özellikle gerçek Son Gün bilinmiyorsa yapay bir tarih oluşturma.
+Sorumlu kişi gerçekten çıkarılamıyorsa boş bırak.
+
+Ama Önem, Aciliyet, Durum, Sonraki Aksiyon ve Gelir / Risk gibi
+operasyonel değerlendirme alanlarını sırf Murat açıkça söylemedi diye boş bırakma.
 
 create_task ok:true olmadan yeni görevin oluşturulduğunu söyleme.
 
@@ -770,7 +796,7 @@ const tools = [
         task: {
           type: 'object',
           description:
-            'Oluşturulacak görevin alanları. İş alanı zorunludur. Bilinmeyen alanları tahmin etmek yerine boş bırak.',
+            'Oluşturulacak görevin alanları. İş alanı zorunludur. Operasyonel bağlamdan makul biçimde makul çıkarılabilen alanları doldur; kesin olarak bilinmesi gereken bilgileri uydurma.',
           properties: {
 
             'İş': {

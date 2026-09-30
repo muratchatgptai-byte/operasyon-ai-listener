@@ -1598,7 +1598,7 @@ async function openAI(messages) {
             effort: 'medium'
           },
         
-          max_output_tokens: 4000
+          max_output_tokens: 8000
         
         })
 

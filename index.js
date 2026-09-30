@@ -2987,6 +2987,86 @@ const httpServer =
       }
 
 
+       // --------------------------------------------
+      // PRIVACY POLICY
+      // --------------------------------------------
+
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/privacy'
+      ) {
+
+        res.writeHead(
+          200,
+          {
+            'Content-Type':
+              'text/html; charset=utf-8'
+          }
+        );
+
+        res.end(`
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Operasyon AI - Gizlilik Politikası</title>
+</head>
+<body style="font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.6">
+  <h1>Operasyon AI Gizlilik Politikası</h1>
+
+  <p><strong>Son güncelleme:</strong> 30.09.2026</p>
+
+  <p>
+    Operasyon AI, Murat Türkoğlu tarafından işletilen WhatsApp tabanlı
+    işletme ve operasyon yönetim sistemidir.
+  </p>
+
+  <h2>Toplanan bilgiler</h2>
+  <p>
+    Hizmeti kullandığınızda WhatsApp kullanıcı kimliği veya telefon numarası,
+    gönderdiğiniz mesajlar ve talep ettiğiniz işlemler işlenebilir.
+  </p>
+
+  <h2>Bilgilerin kullanım amacı</h2>
+  <p>
+    Bu bilgiler mesajlarınıza cevap vermek, talep ettiğiniz işletme işlemlerini
+    gerçekleştirmek, müşteri ve operasyon süreçlerini yönetmek ve hizmetin
+    güvenli şekilde çalışmasını sağlamak amacıyla kullanılır.
+  </p>
+
+  <h2>Hizmet sağlayıcılar</h2>
+  <p>
+    Hizmetin çalışabilmesi için WhatsApp/Meta, OpenAI, Railway ve Google
+    hizmetleri kullanılabilir. Veriler yalnızca hizmetin sağlanması için
+    gerekli olduğu ölçüde bu altyapılar üzerinden işlenebilir.
+  </p>
+
+  <h2>Verilerin saklanması</h2>
+  <p>
+    Konuşma bağlamı geçici olarak işlenebilir. Kullanıcının talep ettiği
+    operasyonel kayıtlar görev, takip, müşteri veya benzeri işletme kayıtları
+    olarak saklanabilir.
+  </p>
+
+  <h2>Veri talepleri</h2>
+  <p>
+    Kişisel verileriniz hakkında bilgi almak veya silme talebinde bulunmak
+    için bizimle iletişime geçebilirsiniz.
+  </p>
+
+  <h2>İletişim</h2>
+  <p>
+    E-posta: muratchatgptai@gmail.com
+  </p>
+</body>
+</html>
+        `);
+
+        return;
+      }
+
+      
       // --------------------------------------------
       // META WEBHOOK VERIFICATION
       // --------------------------------------------

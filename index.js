@@ -267,14 +267,27 @@ Görevler dışındaki mevcut workbook sayfalarına yeni kayıt
 veya satır eklemek için append_rows kullan.
 
 Görevler dışındaki mevcut bir kaydı değiştirmek için
-update_row kullan.
+genel olarak update_row kullan.
 
-append_rows veya update_row kullanmadan önce read_workbook
-ile güncel workbook'u oku. Doğru sayfayı ve mevcut veriyi
-doğrula.
+Ancak Alacak Takip üzerindeki tarih güncellemelerinde
+müşteri adı ve yazılacak tarih kullanıcı tarafından açıkça verilmişse
+update_row kullanma.
+
+Bu durumda doğrudan update_receivable_date kullan.
+Bu araç müşteriyi Alacak Takip içinde kendisi bulur ve yazdığı
+tarihi aynı işlem içinde doğrular. Bu nedenle bu özel işlemden
+önce read_workbook çağırma.
+
+update_receivable_date sonucunda hem ok:true hem verified:true
+gelmeden kullanıcıya tarihin güncellendiğini söyleme.
+
+verified:false veya ok:false gelirse işlemin başarılı olduğunu
+söyleme. Tool'un döndürdüğü gerçek hataya göre hareket et.
+
+Diğer append_rows veya update_row işlemlerinden önce read_workbook
+ile güncel workbook'u oku. Doğru sayfayı ve mevcut veriyi doğrula.
 
 AT Master sayfası yalnızca kaynak/doğrulama amacıyla okunabilir.
-
 AT Master üzerinde hiçbir koşulda append_rows veya update_row kullanma.
 AT Master'daki hiçbir hücreyi değiştirmeye çalışma.
 
@@ -289,18 +302,24 @@ güncelleme hedefi olarak Alacak Takip'i kullan.
 
 Alacak Takip için kısa tarih güncelleme kuralı:
 
-Murat yalnızca müşteri adı + tarih yazarsa, örneğin:
+Kullanıcı yalnızca müşteri adı + tarih yazarsa, örneğin:
 "Barben 07.11.2026"
 "Organic Gd - 07.11.2026"
 
-bu tarih "Ödeme Yapılması Gereken Tarih" alanına yazılır.
+update_receivable_date aracını şu şekilde kullan:
+field = "payment_due_date"
 
-"Yeni Ödeme Tarihi" alanını yalnızca Murat açıkça
+Bu tarih "Ödeme Yapılması Gereken Tarih" alanına yazılır.
+
+"Yeni Ödeme Tarihi" alanını yalnızca kullanıcı açıkça
 "yeni ödeme tarihi", "yeni tarih", "ödeme sözünü şu tarihe verdi"
 veya benzer şekilde yeni/ertelenmiş ödeme tarihini belirttiğinde kullan.
 
+Bu durumda:
+field = "new_payment_date"
+
 Sadece müşteri adı + tarih verilen kısa komutta
-"Yeni Ödeme Tarihi" alanını kullanma.
+"new_payment_date" kullanma.
 
 Tahsilat ve listeleme sorgularında Murat'ın belirtmediği filtreleri
 kendiliğinden ekleme.
@@ -1154,6 +1173,65 @@ const tools = [
     }
   },
 
+        args.date,
+
+      field:
+        args.field
+    }
+  );
+}
+2) Satır 1156 — update_row tool tanımının hemen ALTINA
+{
+  type: 'function',
+  function: {
+    name:
+      'update_receivable_date',
+
+    description:
+      'Alacak Takip sayfasında bir müşterinin tarih alanını müşteri adına göre bulur, günceller ve yazılan değeri aynı işlem içinde doğrular. Bu araç müşteri adı ve tarih net olduğunda read_workbook gerektirmez.',
+
+    parameters: {
+      type: 'object',
+
+      properties: {
+
+        customer_name: {
+          type: 'string',
+          description:
+            'Alacak Takip içindeki müşteri / satış noktası adı.'
+        },
+
+        date: {
+          type: 'string',
+          description:
+            'GG.AA.YYYY formatında tarih.'
+        },
+
+        field: {
+          type: 'string',
+          enum: [
+            'payment_due_date',
+            'new_payment_date',
+            'call_date',
+            'last_payment_date'
+          ],
+          description:
+            'payment_due_date = Ödeme Yapılması Gereken Tarih; new_payment_date = Yeni Ödeme Tarihi; call_date = Aranma Tarihi; last_payment_date = Son Ödeme Yaptığı Tarih.'
+        }
+
+      },
+
+      required: [
+        'customer_name',
+        'date',
+        'field'
+      ],
+
+      additionalProperties: false
+    }
+  }
+},
+  
   {
   type: 'function',
   function: {
@@ -1685,6 +1763,27 @@ if (call.function.name === 'update_row') {
 
 }
 
+if (
+  call.function.name ===
+  'update_receivable_date'
+) {
+
+  return bridge(
+    'update_receivable_date',
+    {
+      customer_name:
+        args.customer_name,
+
+      date:
+        args.date,
+
+      field:
+        args.field
+    }
+  );
+}
+
+  
 if (call.function.name === 'format_sheet') {
 
   return bridge(

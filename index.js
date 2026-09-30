@@ -105,6 +105,48 @@ function getWhatsAppUserName(channel) {
   return 'WhatsApp kullanıcısı';
 }
 
+function getWhatsAppTargetIds(target) {
+
+  const normalized =
+    String(target || '')
+      .trim()
+      .toLocaleLowerCase('tr-TR');
+
+  if (
+    normalized === 'murat' ||
+    normalized === 'ben'
+  ) {
+    return WHATSAPP_MURAT_WA_ID
+      ? [WHATSAPP_MURAT_WA_ID]
+      : [];
+  }
+
+  if (normalized === 'kerim') {
+    return WHATSAPP_KERIM_WA_ID
+      ? [WHATSAPP_KERIM_WA_ID]
+      : [];
+  }
+
+  if (normalized === 'kadir') {
+    return WHATSAPP_KADIR_WA_ID
+      ? [WHATSAPP_KADIR_WA_ID]
+      : [];
+  }
+
+  if (
+    normalized === 'herkes' ||
+    normalized === 'all'
+  ) {
+    return [
+      WHATSAPP_MURAT_WA_ID,
+      WHATSAPP_KERIM_WA_ID,
+      WHATSAPP_KADIR_WA_ID
+    ].filter(Boolean);
+  }
+
+  return [];
+}
+
 // ============================================================
 // DEDUPE
 // ============================================================
@@ -748,6 +790,19 @@ Kesin olarak çıkarılamayan operasyonel gerçekleri uydurma.
 
 append_rows ok:true dönmeden takip kaydının oluşturulduğunu söyleme.
 
+Kullanıcı başka bir WhatsApp kullanıcısına operasyonel bilgi
+göndermeni açıkça isterse send_whatsapp_message kullan.
+
+Örnekler:
+"Kerim'e bugünkü tahsilat programını gönder"
+"Kadir'e bugün yapması gerekenleri gönder"
+"Herkese bugünün önemli işlerini gönder"
+
+Gönderilecek içerik workbook verisine bağlıysa önce read_workbook
+ile güncel veriyi oku ve doğru mesajı hazırla.
+
+send_whatsapp_message ok:true dönmeden mesajın gönderildiğini söyleme.
+
 Operasyon AI'nın Railway zaman motoru üzerinden Murat'a kullanıcı mesajı
 olmadan proaktif Slack mesajı gönderme yeteneği vardır.
 
@@ -1163,6 +1218,41 @@ const tools = [
   }
 }
 
+,
+{
+  type: 'function',
+  function: {
+    name: 'send_whatsapp_message',
+    description:
+      'Hazırlanan operasyonel mesajı Murat, Kerim, Kadir veya herkese WhatsApp üzerinden gönderir.',
+    parameters: {
+      type: 'object',
+      properties: {
+
+        target: {
+          type: 'string',
+          enum: [
+            'murat',
+            'kerim',
+            'kadir',
+            'herkes'
+          ]
+        },
+
+        message: {
+          type: 'string'
+        }
+
+      },
+      required: [
+        'target',
+        'message'
+      ],
+      additionalProperties: false
+    }
+  }
+}
+  
 ];
 
 
@@ -1281,6 +1371,39 @@ async function executeTool(call) {
 
 }
 
+  if (
+  call.function.name ===
+  'send_whatsapp_message'
+) {
+
+  const targets =
+    getWhatsAppTargetIds(
+      args.target
+    );
+
+  if (!targets.length) {
+    return {
+      ok: false,
+      error:
+        'WhatsApp hedefi bulunamadı'
+    };
+  }
+
+  for (const waId of targets) {
+    await sendWhatsAppText(
+      waId,
+      args.message
+    );
+  }
+
+  return {
+    ok: true,
+    target:
+      args.target,
+    sent_count:
+      targets.length
+  };
+}
 
   if (call.function.name === 'list_tasks') {
 

@@ -33,6 +33,15 @@ const WHATSAPP_PHONE_NUMBER_ID =
 const META_GRAPH_VERSION =
   process.env.META_GRAPH_VERSION || '';
 
+const WHATSAPP_MURAT_WA_ID =
+  process.env.WHATSAPP_MURAT_WA_ID || '';
+
+const WHATSAPP_KERIM_WA_ID =
+  process.env.WHATSAPP_KERIM_WA_ID || '';
+
+const WHATSAPP_KADIR_WA_ID =
+  process.env.WHATSAPP_KADIR_WA_ID || '';
+
 // ============================================================
 // REQUIRED VARIABLES
 // ============================================================
@@ -63,7 +72,38 @@ const app = new App({
 
 const processed = new Map();
 const conversations = new Map();
+function getWhatsAppUserName(channel) {
 
+  if (!channel?.startsWith('wa:')) {
+    return 'Murat';
+  }
+
+  const waId =
+    channel.slice(3);
+
+  if (
+    WHATSAPP_MURAT_WA_ID &&
+    waId === WHATSAPP_MURAT_WA_ID
+  ) {
+    return 'Murat';
+  }
+
+  if (
+    WHATSAPP_KERIM_WA_ID &&
+    waId === WHATSAPP_KERIM_WA_ID
+  ) {
+    return 'Kerim';
+  }
+
+  if (
+    WHATSAPP_KADIR_WA_ID &&
+    waId === WHATSAPP_KADIR_WA_ID
+  ) {
+    return 'Kadir';
+  }
+
+  return 'WhatsApp kullanıcısı';
+}
 
 // ============================================================
 // DEDUPE
@@ -1743,8 +1783,22 @@ async function askAgent(channel, text, currentTs, imageInputs = []) {
     }
   ).format(new Date());
 
-  const dynamicManagerPrompt = `
+  const currentUserName =
+  getWhatsAppUserName(channel);
+
+const dynamicManagerPrompt = `
 Şu anki Türkiye tarih ve saati: ${nowTR}
+
+Bu konuşmayı yapan kullanıcı: ${currentUserName}.
+
+WhatsApp kullanıcısının kimliği sistemdeki wa_id eşleşmesinden gelir.
+Kullanıcının kimliğini tahmin etme.
+
+MANAGER_PROMPT içinde geçen "Murat" işletme sahibi/yönetici
+referansıdır; bunu otomatik olarak konuşan kişi olarak kabul etme.
+
+Bu aşamada Murat, Kerim, Kadir ve diğer WhatsApp kullanıcıları
+aynı operasyonel yetkilere sahiptir.
 
 "bugün", "yarın", "1 hafta sonra", "3 dakika sonra", "cuma",
 "ayın sonunda" gibi göreli tarih ifadelerini hesaplarken bu tarih

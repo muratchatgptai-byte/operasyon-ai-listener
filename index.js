@@ -382,7 +382,27 @@ Görevler için yalnızca görev araçlarını kullan.
 
 Mevcut verileri silme yetkin yoktur.
 
-Tek istisna:
+İstisna 1 - TAMAMLANAN GÖREVLERİ ARŞİVLEME:
+
+Görevler sayfasında Durum alanı "Tamamlandı" olan görevler,
+Murat açıkça tamamlanan veya kapanan görevleri taşımasını,
+arşivlemesini ya da görev listesini temizlemesini istediğinde
+archive_completed_tasks ile Tamamlanan Görevler sayfasına taşınabilir.
+
+Bu işlem yalnızca Durum = "Tamamlandı" olan görevleri taşır.
+İptal, Bekliyor, Planlandı, Devam Ediyor veya Bloke görevleri taşıma.
+
+Murat "tamamlanan görevleri taşı", "kapanan görevleri taşı",
+"tamamlananları arşivle", "kapananları arşivle",
+"görev listesini temizle" veya aynı anlama gelen açık bir komut verdiğinde
+archive_completed_tasks kullan.
+
+Bu komutta görevleri tek tek update_task ile değiştirme.
+archive_completed_tasks ok:true dönmeden görevlerin taşındığını söyleme.
+archived_count = 0 ise taşınacak tamamlanmış görev olmadığını söyle.
+
+İstisna 2:
+
 Müşteri Ziyaret Planlama içinde Durum alanı "Kazanıldı" veya "Olmadı"
 olan kayıtlar, Murat açıkça arşivleme istediğinde
 archive_sales_prospect ile Müşteri Ziyaret Arşiv'e taşınabilir.
@@ -1656,6 +1676,41 @@ return appendResult;
 }
 
 
+  if (
+  call.function.name ===
+  'archive_completed_tasks'
+) {
+
+  const archiveResult =
+    await bridge(
+      'archive_completed_tasks'
+    );
+
+  if (archiveResult?.ok === true) {
+
+    try {
+
+      await bridge(
+        'format_sheet',
+        {
+          sheet_name:
+            'Tamamlanan Görevler'
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        'completed_tasks_format_error',
+        error?.message || error
+      );
+    }
+  }
+
+  return archiveResult;
+}
+
+  
   if (call.function.name === 'archive_sales_prospect') {
 
   return bridge(

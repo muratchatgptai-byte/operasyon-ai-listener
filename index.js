@@ -1154,6 +1154,22 @@ const tools = [
     }
   }
 },
+
+
+  {
+  type: 'function',
+  function: {
+    name: 'archive_completed_tasks',
+    description:
+      'Görevler sayfasındaki Durum alanı Tamamlandı olan tüm görevleri tek seferde Tamamlanan Görevler sayfasına taşır ve Görevler listesinden çıkarır.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false
+    }
+  }
+},
+
   
   {
     type: 'function',

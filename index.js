@@ -748,143 +748,143 @@ Hafıza kayıtlarını da karar verirken dikkate al.
 
 GELECEĞE DÖNÜK TAKİP KURALLARI:
 
-Murat gelecekte takip edilmesi gereken operasyonel bir olay söylediğinde
-bu bilgiyi yalnızca sohbet içinde bırakma.
+Takip sayfası yalnızca başka bir operasyon sayfasına doğal olarak ait olmayan
+bağımsız zamanlı hatırlatmalar için kullanılır.
 
-Örnekler:
-- "Peçko 1 hafta sonra ödeme yapacak."
-- "Bu müşteriyi cuma tekrar ara."
-- "Ay sonunda fiyatları kontrol et."
-- "Bu işin sonucuna 3 gün sonra tekrar bakalım."
+Örnek:
 
-Böyle bir bilgi geldiğinde önce read_workbook ile mevcut workbook'u ve
-Takip sayfasını kontrol et.
+- "Yarın 14:30'da Hasan'ı ara."
+- "Cuma 10:00'da belediyeyi ara."
+- "3 saat sonra kazanı kontrol et."
 
-Aynı veya aynı konuyla ilgili açık bir takip kaydı zaten varsa mükerrer
-kayıt oluşturma. Mevcut kaydı değerlendir ve Murat açıkça değiştirilmesini
-istemediği sürece yeni kayıt oluşturma veya mevcut kaydı değiştirme.
+Aşağıdaki kayıtları Takip sayfasına kopyalama:
 
-Yeni bir takip gerekiyorsa append_rows kullanarak Takip sayfasına kaydet.
+- Görevler sayfasındaki görevler
+- Alacak Takip kayıtları
+- Müşteri Ziyaret Planlama kayıtları
+- Sipariş veya başka özel operasyon sayfalarındaki kayıtlar
+
+Bir bilgi doğal olarak kendi operasyon sayfasına aitse o sayfa kullanılmalıdır.
+
+Örneğin bir müşterinin ödeme tarihi Alacak Takip içinde tutuluyorsa,
+aynı ödeme için ayrıca Takip kaydı oluşturma.
+
+Bir görev Görevler sayfasında bulunuyorsa aynı görev için Takip kaydı oluşturma.
+
+Bir müşteri follow-up'ı Müşteri Ziyaret Planlama içinde bulunuyorsa aynı
+follow-up için Takip kaydı oluşturma.
+
+Takip artık proaktif bildirim motorunun hafızası veya ara deposu değildir.
+
+Yeni bağımsız hatırlatma gerekiyorsa önce Takip sayfasını kontrol et.
+
+Aynı bağımsız hatırlatma için açık kayıt varsa mükerrer kayıt oluşturma.
+
+Yeni kayıt gerekiyorsa append_rows ile Takip sayfasına ekle.
 
 Takip sayfasının sütunları:
+
 # | Kayıt Tarihi | Konu | Şirket / Kişi | Tür | Talep / Bilgi Sahibi |
 Olay Tarihi | Ön Uyarı | Durum | Son Kontrol | Sonraki Kontrol | Not
 
-"Kayıt Tarihi" takip kaydının oluşturulduğu gerçek tarih ve saattir.
-Her yeni takip kaydında doldurulmalıdır.
+Yeni bağımsız hatırlatmada:
 
-Kayıt Tarihi şu formatta olmalıdır:
+Tür = "Hatırlatma"
+
+olmalıdır.
+
+Başka Tür değerleri otomatik bağımsız hatırlatma motoru tarafından çalıştırılmaz.
+
+"Talep / Bilgi Sahibi" hatırlatmanın kime ait olduğunu belirtir.
+
+Murat talimat verdiyse:
+
+Talep / Bilgi Sahibi = "Murat"
+
+Kerim verdiyse:
+
+Talep / Bilgi Sahibi = "Kerim"
+
+Kadir verdiyse:
+
+Talep / Bilgi Sahibi = "Kadir"
+
+Kişi bilinmiyorsa isim uydurma.
+
+Sahibi boş olan hatırlatma otomatik WhatsApp bildirimi üretmez.
+
+"Kayıt Tarihi" gerçek kayıt tarih/saatidir:
+
 GG.AA.YYYY SS:DD
 
-Göreli tarih hesaplamalarında Kayıt Tarihi referans alınmalıdır.
-Örneğin Kayıt Tarihi 23.09.2026 ise "1 hafta sonra" 30.09.2026 olarak
-hesaplanır.
+"Konu" bildirilecek kısa hatırlatma metnidir.
 
-"#" alanında mevcut Takip kayıtlarını inceleyerek sıradaki numarayı kullan.
+"Olay Tarihi" olayın gerçek tarih/saatidir.
 
-"Konu" alanına takip edilmesi gereken olayı kısa ve anlaşılır şekilde yaz.
+"Sonraki Kontrol" hatırlatmanın gönderileceği gerçek tarih/saat olmalıdır.
 
-"Şirket / Kişi" alanına olayın ilgili olduğu şirket, müşteri veya kişiyi yaz.
-Bu bilgi mevcut verilerden çıkarılamıyorsa uydurma.
+Saatli hatırlatmalarda:
 
-"Tür" alanında olayın niteliğini belirt.
-Örneğin: Tahsilat, Görev, Müşteri, Sipariş, Ziyaret, Fiyat, Üretim veya
-uygun başka bir operasyonel tür.
-
-"Talep / Bilgi Sahibi" iletişim kanalını değil, takip bilgisini veren veya
-takibi isteyen kişiyi ifade eder.
-
-Murat takip talimatını verdiyse "Talep / Bilgi Sahibi" alanına "Murat" yaz.
-Başka bir kişi tarafından verilen bilgi olduğu açıkça belirtilmişse o kişinin
-adını yaz. Kişi belirlenemiyorsa isim uydurma.
-
-"Olay Tarihi" olayın gerçekleşmesi veya kontrol edilmesi beklenen tarihtir.
-
-Göreli tarih ifadelerini Takip sayfasına aynen yazma.
-"yarın", "1 hafta sonra", "cuma", "ayın sonunda" gibi ifadeleri
-konuşmanın gerçekleştiği tarihe göre gerçek takvim tarihine çevir.
-
-Olay Tarihi mutlaka:
-GG.AA.YYYY
-
-Saat bilgisi varsa:
 GG.AA.YYYY SS:DD
 
-formatında kaydedilmelidir.
+formatını kullan.
 
-Örneğin konuşma tarihi 23.09.2026 ise:
-"1 hafta sonra" -> 30.09.2026
-"yarın saat 14:00" -> 24.09.2026 14:00
+Göreli ifadeleri gerçek tarihe çevir.
 
-"Ön Uyarı" olaydan ne kadar önce uyarılması gerektiğini süre olarak belirtir.
 Örneğin:
-1 gün
-2 gün
-3 saat
 
-Murat açıkça bir ön uyarı süresi söylediyse onu kullan.
-Söylemediyse olayın niteliğine göre makul bir ön uyarı belirlenebilir.
+"yarın 14:00"
+-> gerçek yarın tarihi + 14:00
 
-"Durum" yeni takip kayıtlarında varsayılan olarak "Açık" olabilir.
+"3 saat sonra"
+-> mevcut gerçek saate 3 saat eklenmiş tarih/saat
 
-"Son Kontrol" henüz kontrol yapılmadıysa boş bırakılabilir.
+Yeni bağımsız hatırlatmalarda:
 
-"Sonraki Kontrol" serbest metin değildir.
-Sistemin konuyu yeniden değerlendireceği gerçek tarih/saat olmalıdır.
+Durum = "Açık"
 
-Sonraki Kontrol mutlaka:
-GG.AA.YYYY
+olmalıdır.
 
-veya saat gerekiyorsa:
-GG.AA.YYYY SS:DD
+Railway zaman motoru yalnızca:
 
-formatında kaydedilmelidir.
+Tür = "Hatırlatma"
+ve
+Durum = "Açık"
+ve
+Sonraki Kontrol zamanı gelmiş
 
-Örneğin Olay Tarihi 30.09.2026 ve Ön Uyarı 1 gün ise
-Sonraki Kontrol 29.09.2026 olarak kaydedilir.
+kayıtları otomatik WhatsApp bildirimi olarak gönderir.
 
-Göreli ifadenin orijinali takip açısından önemliyse Not alanında
-saklanabilir.
+Tek seferlik bağımsız hatırlatma başarıyla gönderildikten sonra sistem kaydı
+Tamamlandı durumuna getirir.
 
-"Not" alanına takip açısından gerekli ek bağlamı kısa şekilde yaz.
+RUTİN OTOMATİK BİLDİRİM MOTORU:
 
-Takip kaydı oluştururken mevcut workbook'taki ilgili bilgileri kullan.
-Kesin olarak çıkarılamayan operasyonel gerçekleri uydurma.
+Rutin bildirimler Takip üzerinden üretilmez.
 
-append_rows ok:true dönmeden takip kaydının oluşturulduğunu söyleme.
+Görevler ve Alacak Takip kendi kaynak sayfalarından doğrudan bildirilir.
 
-Kullanıcı başka bir WhatsApp kullanıcısına operasyonel bilgi
-göndermeni açıkça isterse send_whatsapp_message kullan.
+Rutin bildirim saatleri:
 
-Örnekler:
-"Kerim'e bugünkü tahsilat programını gönder"
-"Kadir'e bugün yapması gerekenleri gönder"
-"Herkese bugünün önemli işlerini gönder"
+08:30
+14:00
+18:00
 
-Gönderilecek içerik workbook verisine bağlıysa önce read_workbook
-ile güncel veriyi oku ve doğru mesajı hazırla.
+Görev bildirimleri kod tarafından Görevler sayfasından seçilir.
+
+Alacak bildirimleri kod tarafından Alacak Takip sayfasından seçilir.
+
+Bu rutin bildirimler için Takip sayfasına kayıt oluşturma.
+
+Müşteri Ziyaret Planlama aynı 08:30 / 14:00 / 18:00 scheduler yapısına
+bağlıdır ancak seçim kuralları ayrıca tanımlanacaktır.
+
+Kullanıcı başka bir WhatsApp kullanıcısına operasyonel bilgi göndermeni açıkça
+isterse send_whatsapp_message kullan.
+
+Gönderilecek içerik workbook verisine bağlıysa önce güncel veriyi doğrula.
 
 send_whatsapp_message ok:true dönmeden mesajın gönderildiğini söyleme.
-
-Operasyon AI'nın Railway zaman motoru üzerinden kayıtlı WhatsApp
-kullanıcılarına kullanıcı mesajı olmadan proaktif WhatsApp bildirimi
-gönderme yeteneği vardır.
-
-Şimdilik otomatik proaktif bildirimler aynı içerikle
-Murat, Kerim ve Kadir'e gönderilir.
-
-Bu nedenle Murat zamanlı/proaktif bildirimlerin çalışıp çalışmadığını
-sorduğunda "kendiliğimden mesaj gönderemem" veya benzeri ifadeler kullanma.
-Takip ve zaman motorunun mevcut durumunu workbook verisine göre değerlendir.
-
-Bir bildirim gönderildi diye Takip kaydının Durum alanını "İletildi" veya
-"Hatırlatıldı" yapma.
-
-Altındaki operasyonel konu hâlâ çözülmemişse Durum "Açık" kalmalıdır.
-Son Kontrol ve Sonraki Kontrol alanlarını güncelle.
-
-Durum yalnızca konunun gerçekten tamamlandığına dair yeterli bilgi varsa
-"Tamamlandı" yapılabilir.
 `;
 
 
@@ -2435,286 +2435,21 @@ const history =
 
 }
 
-// =========================================================
-// PROAKTİF OPERASYON KONTROLÜ
-// =========================================================
-
-let proactiveCheckRunning = false;
-
-
-// ---------------------------------------------------------
-// PROAKTİF WHATSAPP BİLDİRİMİ
-// ---------------------------------------------------------
-
-async function sendProactiveWhatsAppMessage(text) {
-
-  const targets =
-    getWhatsAppTargetIds('herkes');
-
-  if (!targets.length) {
-    throw new Error(
-      'Proaktif WhatsApp alıcısı bulunamadı.'
-    );
-  }
-
-  const results =
-    await Promise.allSettled(
-      targets.map(
-        waId =>
-          sendWhatsAppText(
-            waId,
-            text
-          )
-      )
-    );
-
-  const failedCount =
-    results.filter(
-      result =>
-        result.status === 'rejected'
-    ).length;
-
-  const sentCount =
-    results.length -
-    failedCount;
-
-  console.log(
-    JSON.stringify({
-      type:
-        'proactive_whatsapp_sent',
-      sent_count:
-        sentCount,
-      failed_count:
-        failedCount
-    })
-  );
-
-  if (sentCount === 0) {
-    throw new Error(
-      'Proaktif WhatsApp bildirimi hiçbir alıcıya gönderilemedi.'
-    );
-  }
-}
-
-
-// ---------------------------------------------------------
-// PROAKTİF TAKİP KONTROLÜ
-// ---------------------------------------------------------
-
-async function runProactiveCheck(dueSignature = '') {
-
-  if (proactiveCheckRunning) {
-    return;
-  }
-
-  proactiveCheckRunning = true;
-
-  try {
-
-  const exactDueInstruction =
-  dueSignature
-    ? `
-Bu kontrol tam saatli bir Takip kaydı tarafından tetiklendi.
-
-Zamanı gelmiş takip kaydı:
-${dueSignature}
-
-Bu kaydın Durum'u hâlâ "Açık" ise bu takip için NO_ACTION kullanma.
-Murat bu zamanı özellikle takip/hatırlatma için belirledi.
-İlgili hatırlatmayı mutlaka kullanıcıya bildir.
-
-Hatırlatmayı gönderdikten sonra gerekli ise Son Kontrol ve Sonraki Kontrol
-alanlarını update_row ile güncelle.
-`
-    : '';
-    
-    const result = await askAgent(
-      '__proactive__',
-      `
-Bu kullanıcı tarafından başlatılmış normal bir sohbet değildir.
-Bu, Operasyon AI tarafından otomatik başlatılan proaktif operasyon kontrolüdür.
-
-${exactDueInstruction}
-
-Önce read_workbook kullanarak workbook'un tamamını oku.
-
-Amacın Murat'a rutin rapor üretmek değil; şu anda dikkat veya aksiyon
-gerektiren operasyonel durumları tespit etmektir.
-
-Özellikle aşağıdaki alanları kontrol et:
-
-1. TAKİP
-- Durumu "Açık" olan kayıtları incele.
-- Sonraki Kontrol tarihi gelmiş veya geçmiş kayıtları değerlendir.
-- Olay Tarihi yaklaşmış, bugün olmuş veya geçmiş kayıtları değerlendir.
-- Önceden bildirim yapılması gereken bir durum varsa Murat'a bildir.
-- Aynı konu hakkında gereksiz tekrar bildirim üretme.
-
-2. GÖREVLER
-- Son Gün tarihi geçmiş fakat tamamlanmamış görevleri tespit et.
-- Son Gün yaklaşan önemli veya acil görevleri değerlendir.
-- Uzun süredir açık/bekleyen ve aksiyon gerektiren görevleri değerlendir.
-- Önem ve Aciliyet alanlarını dikkate al.
-- Yalnızca gerçekten Murat'ın dikkatini gerektiren görevleri bildir.
-
-3. ALACAK TAKİP
-- Vadesi yaklaşan alacakları değerlendir.
-- Vadesi geçmiş ve kapanmamış alacakları tespit et.
-- Tahsilat açısından önceden iletişim kurulması gereken durumları değerlendir.
-- Geciken veya riskli tahsilatları Murat'a bildir.
-
-4. BEKLEYEN SİPARİŞLER
-- Varsa bekleyen siparişleri incele.
-- Gecikme, termin riski veya aksiyon gerektiren kayıtları tespit et.
-- Normal ilerleyen siparişler için gereksiz bildirim üretme.
-
-5. MÜŞTERİ ZİYARET PLANI
-- Bugünkü ve yaklaşan ziyaretleri değerlendir.
-- Gecikmiş veya yapılmamış planlı ziyaretleri tespit et.
-- Murat'ın önceden bilmesi gereken ziyaretleri bildir.
-
-6. DİĞER WORKBOOK SAYFALARI
-- Workbook'taki diğer sayfalarda açıkça tarih, gecikme, risk veya yaklaşan
-  aksiyon gösteren önemli bir durum varsa değerlendirebilirsin.
-- Sırf veri var diye bildirim üretme.
-
-BİLDİRİM KURALI:
-
-Murat'ın şu anda bilmesi veya harekete geçmesi gereken hiçbir şey yoksa
-yalnızca:
-
-NO_ACTION
-
-yaz.
-
-Bildirim gerekiyorsa kısa ve operasyonel yaz.
-Rutin özet hazırlama.
-Sadece dikkat gerektiren maddeleri yaz.
-
-Örneğin:
-
-"Peçko ödemesi yarın. Bugün ödeme teyidi için iletişime geçmek uygun olabilir."
-
-veya:
-
-"2 görev gecikmiş:
-#41 Robot Coupe Makine Tamir
-#55 Biber Ekibi Sigorta"
-
-TAKİP KAYDI YENİDEN KONTROL VE TEKRAR BİLDİRİM KURALLARI:
-
-Bir Takip kaydının Durum alanı "Açık" ise, daha önce bildirim yapılmış
-olması bu kaydın artık bildirilmeyeceği anlamına gelmez.
-
-Sonraki Kontrol zamanı gelmiş veya geçmişse kayıt yeniden değerlendirilmelidir.
-
-Kayıt hâlâ açık ve konu çözülmemişse Murat'a tekrar bildirim yapılabilir.
-
-Ancak aynı bildirimi kısa aralıklarla gereksiz yere tekrar etme.
-
-Bildirim yapıldığında update_row kullanarak:
-- Son Kontrol alanına mevcut gerçek tarih/saat
-- Sonraki Kontrol alanına konunun yeniden kontrol edilmesi gereken gerçek
-  tarih/saat
-yaz.
-
-Son Kontrol ve Sonraki Kontrol tarihleri:
-GG.AA.YYYY SS:DD
-formatında olabilir.
-
-Tekrar kontrol sıklığını olayın niteliğine göre belirle.
-
-Örneğin:
-- Olay yarın gerçekleşecekse bugün bildir ve bir sonraki kontrolü olay
-  tarihine koy.
-- Olay bugünse ve hâlâ açıksa bildir ve gerekirse ertesi gün tekrar kontrol et.
-- Olay tarihi geçmiş ve konu hâlâ çözülmemişse tekrar bildir.
-- Kritik veya acil konular daha sık kontrol edilebilir.
-- Düşük önemdeki konular gereksiz yere sık bildirilmemelidir.
-
-Örneğin Peçko ödemesi için:
-29.09.2026 -> "Peçko ödemesi yarın."
-30.09.2026 -> hâlâ açıksa "Peçko ödemesi bugün."
-01.10.2026 -> hâlâ açıksa "Peçko ödemesi gecikti."
-
-Bir olayın tamamlandığına dair workbook'ta yeterli kanıt varsa Durum
-güncellenebilir.
-
-Yeterli kanıt yoksa Durum'u kendiliğinden "Tamamlandı" yapma.
-
-Görevler, alacaklar ve diğer açık operasyonel konular için de aynı prensibi
-uygula: açık ve çözülmemiş bir konu unutulmamalı, fakat gereksiz sıklıkta
-tekrar edilmemelidir.
-
-Kesin olmayan operasyonel gerçekleri uydurma.
-
-PROAKTİF BİLDİRİM HAFIZASI:
-
-Takip sayfası dışındaki bir kaynaktan önemli ve açık bir operasyonel konu
-tespit edip Murat'a bildirim gönderiyorsan, aynı konunun tekrar bildirim
-zamanını yönetebilmek için Takip sayfasını kullan.
-
-Önce Takip sayfasında aynı veya aynı konuyla ilgili Açık kayıt olup
-olmadığını kontrol et.
-
-Açık bir Takip kaydı zaten varsa yeni kayıt oluşturma.
-Gerekiyorsa update_row ile Son Kontrol ve Sonraki Kontrol alanlarını güncelle.
-
-İlgili açık Takip kaydı yoksa ve konu gelecekte tekrar kontrol edilmesi
-gereken bir konuysa append_rows ile yeni bir Takip kaydı oluşturabilirsin.
-
-Bu kayıt:
-- bildirimin hangi operasyonel konu için olduğunu,
-- ilgili görev / müşteri / alacak / sipariş bilgisini,
-- Son Kontrol zamanını,
-- uygun Sonraki Kontrol zamanını
-içermelidir.
-
-Sırf bir kez bilgi verdiğin her konu için Takip kaydı oluşturma.
-Yalnızca açık kaldığı sürece yeniden kontrol edilmesi gereken konuları
-Takip sistemine al.
-
-Böylece aynı açık konu her proaktif turda yeniden bildirilmez; Sonraki
-Kontrol zamanı geldiğinde tekrar değerlendirilir.
-
-`
-    );
-
-    const message =
-      String(result || '').trim();
-
-    if (
-      !message ||
-      message === 'NO_ACTION'
-    ) {
-      return;
-    }
-
-    await sendProactiveWhatsAppMessage(
-  message
-);
-
-  } catch (error) {
-
-    console.error(
-      'Proaktif kontrol hatası:',
-      error
-    );
-
-  } finally {
-
-    proactiveCheckRunning = false;
-
-  }
-}
 
 // =========================================================
-// PROAKTİF ZAMAN MOTORU
+// BİLDİRİM OTOMASYONU
 // =========================================================
 
 let lastProactiveSlot = '';
 
 let lastExactDueSignature = '';
+
+let proactiveSchedulerRunning = false;
+
+
+// ---------------------------------------------------------
+// TARİH / METİN YARDIMCILARI
+// ---------------------------------------------------------
 
 function getIstanbulClock() {
 
@@ -2722,75 +2457,226 @@ function getIstanbulClock() {
     new Intl.DateTimeFormat(
       'en-GB',
       {
-        timeZone: 'Europe/Istanbul',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        hourCycle: 'h23'
+        timeZone:
+          'Europe/Istanbul',
+
+        year:
+          'numeric',
+
+        month:
+          '2-digit',
+
+        day:
+          '2-digit',
+
+        hour:
+          '2-digit',
+
+        minute:
+          '2-digit',
+
+        hour12:
+          false,
+
+        hourCycle:
+          'h23'
       }
-    ).formatToParts(new Date());
+    )
+      .formatToParts(
+        new Date()
+      );
+
 
   const values = {};
 
+
   for (const part of parts) {
-    if (part.type !== 'literal') {
-      values[part.type] = part.value;
+
+    if (
+      part.type !==
+      'literal'
+    ) {
+
+      values[
+        part.type
+      ] =
+        part.value;
     }
   }
 
+
   return {
-    year: Number(values.year),
-    month: Number(values.month),
-    day: Number(values.day),
-    hour: Number(values.hour),
-    minute: Number(values.minute)
+    year:
+      Number(
+        values.year
+      ),
+
+    month:
+      Number(
+        values.month
+      ),
+
+    day:
+      Number(
+        values.day
+      ),
+
+    hour:
+      Number(
+        values.hour
+      ),
+
+    minute:
+      Number(
+        values.minute
+      )
   };
 }
 
-// =========================================================
-// TAM SAATLİ TAKİP KONTROLÜ
-// =========================================================
 
-function parseTrackingDateTime(value) {
+function normalizeNotificationText(
+  value
+) {
+
+  return String(
+    value || ''
+  )
+    .trim()
+    .toLocaleLowerCase(
+      'tr-TR'
+    );
+}
+
+
+function parseSheetDate(
+  value
+) {
 
   const text =
-    String(value || '').trim();
+    String(
+      value || ''
+    ).trim();
 
-  if (!text) {
-    return null;
-  }
 
   const match =
     text.match(
-      /^(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2}))?$/
+      /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/
     );
+
 
   if (!match) {
     return null;
   }
 
+
   const day =
-    Number(match[1]);
+    Number(
+      match[1]
+    );
 
   const month =
-    Number(match[2]);
+    Number(
+      match[2]
+    );
 
   const year =
-    Number(match[3]);
+    Number(
+      match[3]
+    );
 
-  // Saat belirtilmemiş takipler sabah 08:30'da aktif olur.
+
+  const time =
+    Date.UTC(
+      year,
+      month - 1,
+      day
+    );
+
+
+  const date =
+    new Date(
+      time
+    );
+
+
+  if (
+    date.getUTCFullYear() !==
+      year ||
+
+    date.getUTCMonth() !==
+      month - 1 ||
+
+    date.getUTCDate() !==
+      day
+  ) {
+
+    return null;
+  }
+
+
+  return time;
+}
+
+
+function parseTrackingDateTime(
+  value
+) {
+
+  const text =
+    String(
+      value || ''
+    ).trim();
+
+
+  if (!text) {
+    return null;
+  }
+
+
+  const match =
+    text.match(
+      /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/
+    );
+
+
+  if (!match) {
+    return null;
+  }
+
+
+  const day =
+    Number(
+      match[1]
+    );
+
+  const month =
+    Number(
+      match[2]
+    );
+
+  const year =
+    Number(
+      match[3]
+    );
+
+
   const hour =
-    match[4] !== undefined
-      ? Number(match[4])
+    match[4] !==
+    undefined
+      ? Number(
+          match[4]
+        )
       : 8;
 
+
   const minute =
-    match[5] !== undefined
-      ? Number(match[5])
+    match[5] !==
+    undefined
+      ? Number(
+          match[5]
+        )
       : 30;
+
 
   return Date.UTC(
     year,
@@ -2807,6 +2693,7 @@ function getCurrentIstanbulComparableTime() {
   const now =
     getIstanbulClock();
 
+
   return Date.UTC(
     now.year,
     now.month - 1,
@@ -2817,250 +2704,1528 @@ function getCurrentIstanbulComparableTime() {
 }
 
 
-async function getDueTrackingSignature() {
-
-  const data =
-    await bridge('read_workbook');
-
-  const rows =
-    data?.workbook?.Takip?.rows || [];
-
-  if (
-    !Array.isArray(rows) ||
-    rows.length < 2
-  ) {
-    return '';
-  }
-
-  const headers =
-    rows[0].map(value =>
-      String(value || '').trim()
-    );
-
-  const noIndex =
-    headers.indexOf('#');
-
-  const statusIndex =
-    headers.indexOf('Durum');
-
-  const nextCheckIndex =
-    headers.indexOf('Sonraki Kontrol');
-
-  if (nextCheckIndex < 0) {
-    return '';
-  }
+function getIstanbulDayKeys() {
 
   const now =
-    getCurrentIstanbulComparableTime();
+    getIstanbulClock();
 
-  const dueItems = [];
 
-  for (
-    let rowIndex = 1;
-    rowIndex < rows.length;
-    rowIndex++
+  const today =
+    Date.UTC(
+      now.year,
+      now.month - 1,
+      now.day
+    );
+
+
+  return {
+    today,
+
+    tomorrow:
+      today +
+      24 *
+      60 *
+      60 *
+      1000
+  };
+}
+
+
+function formatIstanbulDateTime() {
+
+  const now =
+    getIstanbulClock();
+
+
+  return (
+    String(
+      now.day
+    ).padStart(
+      2,
+      '0'
+    ) +
+    '.' +
+    String(
+      now.month
+    ).padStart(
+      2,
+      '0'
+    ) +
+    '.' +
+    String(
+      now.year
+    ) +
+    ' ' +
+    String(
+      now.hour
+    ).padStart(
+      2,
+      '0'
+    ) +
+    ':' +
+    String(
+      now.minute
+    ).padStart(
+      2,
+      '0'
+    )
+  );
+}
+
+
+function parseMoney(
+  value
+) {
+
+  let text =
+    String(
+      value ?? ''
+    )
+      .trim()
+      .replace(
+        /\s+/g,
+        ''
+      );
+
+
+  if (!text) {
+    return 0;
+  }
+
+
+  if (
+    text.includes(',') &&
+    text.includes('.')
   ) {
 
-    const row =
-      rows[rowIndex];
+    if (
+      text.lastIndexOf(',') >
+      text.lastIndexOf('.')
+    ) {
 
-    if (!Array.isArray(row)) {
-      continue;
+      text =
+        text
+          .replace(
+            /\./g,
+            ''
+          )
+          .replace(
+            ',',
+            '.'
+          );
+
+    } else {
+
+      text =
+        text.replace(
+          /,/g,
+          ''
+        );
     }
 
-    const status =
-      statusIndex >= 0
-        ? String(row[statusIndex] || '')
-            .trim()
-            .toLocaleLowerCase('tr-TR')
-        : '';
+  } else if (
+    text.includes(',')
+  ) {
 
-    // Sadece açık takipler
+    text =
+      text
+        .replace(
+          /\./g,
+          ''
+        )
+        .replace(
+          ',',
+          '.'
+        );
+  }
+
+
+  text =
+    text.replace(
+      /[^\d.-]/g,
+      ''
+    );
+
+
+  const number =
+    Number(
+      text
+    );
+
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : 0;
+}
+
+
+// ---------------------------------------------------------
+// DAR KAPSAMLI SHEET OKUMA
+// ---------------------------------------------------------
+
+async function readNotificationSheet(
+  sheetName
+) {
+
+  const result =
+    await bridge(
+      'read_sheet',
+      {
+        sheet_name:
+          sheetName
+      }
+    );
+
+
+  return Array.isArray(
+    result?.rows
+  )
+    ? result.rows
+    : [];
+}
+
+
+// ---------------------------------------------------------
+// SORUMLU -> WHATSAPP DAĞITIMI
+//
+// Kural:
+// - sorumlu boş = kimse
+// - Murat = Murat
+// - Kerim = Kerim + Murat
+// - Kadir = Kadir + Murat
+// - başka dolu sorumlu = Murat
+// ---------------------------------------------------------
+
+function getResponsibleWhatsAppTargets(
+  responsible
+) {
+
+  const name =
+    normalizeNotificationText(
+      responsible
+    );
+
+
+  if (!name) {
+    return [];
+  }
+
+
+  const targets = [];
+
+
+  // Sorumlusu dolu olan
+  // her kayıt Murat'a da gider.
+  if (
+    WHATSAPP_MURAT_WA_ID
+  ) {
+
+    targets.push(
+      WHATSAPP_MURAT_WA_ID
+    );
+  }
+
+
+  if (
+    name === 'kerim' &&
+    WHATSAPP_KERIM_WA_ID
+  ) {
+
+    targets.push(
+      WHATSAPP_KERIM_WA_ID
+    );
+  }
+
+
+  if (
+    name === 'kadir' &&
+    WHATSAPP_KADIR_WA_ID
+  ) {
+
+    targets.push(
+      WHATSAPP_KADIR_WA_ID
+    );
+  }
+
+
+  if (
+    name === 'murat' &&
+    WHATSAPP_MURAT_WA_ID
+  ) {
+
+    targets.push(
+      WHATSAPP_MURAT_WA_ID
+    );
+  }
+
+
+  return [
+    ...new Set(
+      targets.filter(
+        Boolean
+      )
+    )
+  ];
+}
+
+
+function addNotificationLine(
+  grouped,
+  targets,
+  line
+) {
+
+  for (
+    const waId
+    of targets
+  ) {
+
     if (
-      statusIndex >= 0 &&
-      status !== 'açık'
+      !grouped.has(
+        waId
+      )
+    ) {
+
+      grouped.set(
+        waId,
+        []
+      );
+    }
+
+
+    grouped
+      .get(
+        waId
+      )
+      .push(
+        line
+      );
+  }
+}
+
+
+async function sendGroupedNotifications(
+  grouped,
+  title,
+  type
+) {
+
+  for (
+    const [
+      waId,
+      lines
+    ]
+    of grouped.entries()
+  ) {
+
+    if (
+      !lines.length
     ) {
       continue;
     }
 
+
+    const message =
+      [
+        title,
+        '',
+        ...lines
+      ].join(
+        '\n'
+      );
+
+
+    await sendWhatsAppText(
+      waId,
+      message
+    );
+
+
+    console.log(
+      JSON.stringify({
+        type:
+          'scheduled_notification_sent',
+
+        notification_type:
+          type,
+
+        wa_id:
+          waId,
+
+        item_count:
+          lines.length
+      })
+    );
+  }
+}
+
+
+// =========================================================
+// GÖREV BİLDİRİM MOTORU
+//
+// Çalışma:
+// 08:30
+// 14:00
+// 18:00
+//
+// Aday:
+//
+// Durum açık
+//
+// VE
+//
+// Son Gün <= yarın
+//
+// VE
+//
+// Kritik / Acil
+// VEYA
+// Yüksek / Acil
+// VEYA
+// Yüksek / Yüksek
+// =========================================================
+
+async function runTaskNotifications() {
+
+  const rows =
+    await readNotificationSheet(
+      'Görevler'
+    );
+
+
+  if (
+    rows.length < 2
+  ) {
+    return;
+  }
+
+
+  const headers =
+    rows[0].map(
+      value =>
+        String(
+          value || ''
+        ).trim()
+    );
+
+
+  const noIndex =
+    headers.indexOf(
+      '#'
+    );
+
+
+  const taskIndex =
+    headers.indexOf(
+      'İş'
+    );
+
+
+  const importanceIndex =
+    headers.indexOf(
+      'Önem'
+    );
+
+
+  const urgencyIndex =
+    headers.indexOf(
+      'Aciliyet'
+    );
+
+
+  const dueIndex =
+    headers.indexOf(
+      'Son Gün'
+    );
+
+
+  const responsibleIndex =
+    headers.indexOf(
+      'Sorumlu'
+    );
+
+
+  const statusIndex =
+    headers.indexOf(
+      'Durum'
+    );
+
+
+  if (
+    taskIndex < 0 ||
+    importanceIndex < 0 ||
+    urgencyIndex < 0 ||
+    dueIndex < 0 ||
+    responsibleIndex < 0 ||
+    statusIndex < 0
+  ) {
+
+    throw new Error(
+      'Görevler bildirim sütunları eksik.'
+    );
+  }
+
+
+  const {
+    tomorrow
+  } =
+    getIstanbulDayKeys();
+
+
+  const candidates = [];
+
+
+  for (
+    let rowIndex = 1;
+    rowIndex <
+      rows.length;
+    rowIndex++
+  ) {
+
+    const row =
+      rows[
+        rowIndex
+      ];
+
+
+    if (
+      !Array.isArray(
+        row
+      )
+    ) {
+      continue;
+    }
+
+
+    const taskName =
+      String(
+        row[
+          taskIndex
+        ] || ''
+      ).trim();
+
+
+    const responsible =
+      String(
+        row[
+          responsibleIndex
+        ] || ''
+      ).trim();
+
+
+    // Sorumlu boşsa
+    // hiç kimseye bildirim yok.
+    if (
+      !taskName ||
+      !responsible
+    ) {
+      continue;
+    }
+
+
+    const status =
+      normalizeNotificationText(
+        row[
+          statusIndex
+        ]
+      );
+
+
+    if (
+      status ===
+        'tamamlandı' ||
+      status ===
+        'iptal'
+    ) {
+
+      continue;
+    }
+
+
+    const dueTime =
+      parseSheetDate(
+        row[
+          dueIndex
+        ]
+      );
+
+
+    // Son Gün boşsa bildirim yok.
+    //
+    // Yarından sonraysa henüz
+    // bildirim yok.
+    //
+    // Geçmiş / bugün / yarın
+    // dahil edilir.
+    if (
+      dueTime === null ||
+      dueTime >
+        tomorrow
+    ) {
+
+      continue;
+    }
+
+
+    const importance =
+      normalizeNotificationText(
+        row[
+          importanceIndex
+        ]
+      );
+
+
+    const urgency =
+      normalizeNotificationText(
+        row[
+          urgencyIndex
+        ]
+      );
+
+
+    let priority =
+      null;
+
+
+    // Seviye 1
+    // Kritik / Acil
+    if (
+      importance ===
+        'kritik' &&
+      urgency ===
+        'acil'
+    ) {
+
+      priority = 1;
+    }
+
+
+    // Seviye 1
+    // Yüksek / Acil
+    else if (
+      importance ===
+        'yüksek' &&
+      urgency ===
+        'acil'
+    ) {
+
+      priority = 2;
+    }
+
+
+    // Seviye 2
+    // Yüksek / Yüksek
+    else if (
+      importance ===
+        'yüksek' &&
+      urgency ===
+        'yüksek'
+    ) {
+
+      priority = 3;
+    }
+
+
+    // Seviye 3:
+    // otomatik bildirim yok.
+    if (
+      priority === null
+    ) {
+
+      continue;
+    }
+
+
+    const taskNo =
+      noIndex >= 0
+        ? String(
+            row[
+              noIndex
+            ] || ''
+          ).trim()
+        : '';
+
+
+    candidates.push({
+      priority,
+      dueTime,
+      taskNo,
+      taskName,
+      responsible
+    });
+  }
+
+
+  candidates.sort(
+    (a, b) =>
+      a.priority -
+        b.priority ||
+
+      a.dueTime -
+        b.dueTime ||
+
+      Number(
+        a.taskNo || 0
+      ) -
+        Number(
+          b.taskNo || 0
+        )
+  );
+
+
+  const grouped =
+    new Map();
+
+
+  for (
+    const item
+    of candidates
+  ) {
+
+    const targets =
+      getResponsibleWhatsAppTargets(
+        item.responsible
+      );
+
+
+    if (
+      !targets.length
+    ) {
+      continue;
+    }
+
+
+    const line =
+      item.taskNo
+        ? `#${item.taskNo} ${item.taskName}`
+        : item.taskName;
+
+
+    addNotificationLine(
+      grouped,
+      targets,
+      line
+    );
+  }
+
+
+  await sendGroupedNotifications(
+    grouped,
+    '📋 Görevler',
+    'tasks'
+  );
+}
+
+
+// =========================================================
+// ALACAK BİLDİRİM MOTORU
+//
+// Çalışma:
+// 08:30
+// 14:00
+// 18:00
+//
+// Aday:
+//
+// Aktif / Pasif = Aktif
+// VE
+// Ödeme Yapılması Gereken Tarih = bugün
+// VE
+// Kalan Borç > 0
+// VE
+// Sorumlu dolu
+// =========================================================
+
+async function runReceivableNotifications() {
+
+  const rows =
+    await readNotificationSheet(
+      'Alacak Takip'
+    );
+
+
+  if (
+    rows.length < 2
+  ) {
+    return;
+  }
+
+
+  const headers =
+    rows[0].map(
+      value =>
+        String(
+          value || ''
+        ).trim()
+    );
+
+
+  const customerIndex =
+    headers.indexOf(
+      'Satış Noktası'
+    );
+
+
+  const balanceIndex =
+    headers.indexOf(
+      'Kalan Borç'
+    );
+
+
+  const responsibleIndex =
+    headers.indexOf(
+      'Sorumlu'
+    );
+
+
+  const dueIndex =
+    headers.indexOf(
+      'Ödeme Yapılması Gereken Tarih'
+    );
+
+
+  const activeIndex =
+    headers.indexOf(
+      'Aktif / Pasif'
+    );
+
+
+  if (
+    customerIndex < 0 ||
+    balanceIndex < 0 ||
+    responsibleIndex < 0 ||
+    dueIndex < 0 ||
+    activeIndex < 0
+  ) {
+
+    throw new Error(
+      'Alacak Takip bildirim sütunları eksik.'
+    );
+  }
+
+
+  const {
+    today
+  } =
+    getIstanbulDayKeys();
+
+
+  const grouped =
+    new Map();
+
+
+  for (
+    let rowIndex = 1;
+    rowIndex <
+      rows.length;
+    rowIndex++
+  ) {
+
+    const row =
+      rows[
+        rowIndex
+      ];
+
+
+    if (
+      !Array.isArray(
+        row
+      )
+    ) {
+      continue;
+    }
+
+
+    const customer =
+      String(
+        row[
+          customerIndex
+        ] || ''
+      ).trim();
+
+
+    const responsible =
+      String(
+        row[
+          responsibleIndex
+        ] || ''
+      ).trim();
+
+
+    // Sorumlu boş:
+    // kimseye bildirim yok.
+    if (
+      !customer ||
+      !responsible
+    ) {
+
+      continue;
+    }
+
+
+    if (
+      normalizeNotificationText(
+        row[
+          activeIndex
+        ]
+      ) !==
+        'aktif'
+    ) {
+
+      continue;
+    }
+
+
+    if (
+      parseMoney(
+        row[
+          balanceIndex
+        ]
+      ) <= 0
+    ) {
+
+      continue;
+    }
+
+
+    const dueTime =
+      parseSheetDate(
+        row[
+          dueIndex
+        ]
+      );
+
+
+    // Sadece BUGÜN.
+    if (
+      dueTime !==
+      today
+    ) {
+
+      continue;
+    }
+
+
+    const targets =
+      getResponsibleWhatsAppTargets(
+        responsible
+      );
+
+
+    if (
+      !targets.length
+    ) {
+      continue;
+    }
+
+
+    addNotificationLine(
+      grouped,
+      targets,
+      customer
+    );
+  }
+
+
+  await sendGroupedNotifications(
+    grouped,
+    '💰 Bugünkü Tahsilatlar',
+    'receivables'
+  );
+}
+
+
+// =========================================================
+// MÜŞTERİ ZİYARET BİLDİRİM MOTORU
+//
+// 08:30 / 14:00 / 18:00 scheduler'a bağlı.
+//
+// Mert tarafındaki seçim kuralları
+// netleşince yalnız bu fonksiyon doldurulacak.
+// =========================================================
+
+async function runCustomerVisitNotifications() {
+
+  console.log(
+    JSON.stringify({
+      type:
+        'customer_visit_notification_skipped',
+
+      reason:
+        'selection_rules_pending'
+    })
+  );
+}
+
+
+// =========================================================
+// ORTAK PLANLI BİLDİRİM MOTORU
+// =========================================================
+
+async function runScheduledNotifications() {
+
+  const engines = [
+    [
+      'tasks',
+      runTaskNotifications
+    ],
+
+    [
+      'receivables',
+      runReceivableNotifications
+    ],
+
+    [
+      'customer_visits',
+      runCustomerVisitNotifications
+    ]
+  ];
+
+
+  for (
+    const [
+      name,
+      runner
+    ]
+    of engines
+  ) {
+
+    try {
+
+      await runner();
+
+    } catch (error) {
+
+      console.error(
+        `${name}_notification_error`,
+        error?.message ||
+          error
+      );
+    }
+  }
+}
+
+
+// =========================================================
+// BAĞIMSIZ TAKİP HATIRLATMALARI
+//
+// Yalnız:
+//
+// Tür = Hatırlatma
+// Durum = Açık
+// Sonraki Kontrol <= şimdi
+//
+// Eski Görev / Tahsilat / Müşteri kopyaları
+// artık burada çalışmaz.
+// =========================================================
+
+async function getDueTrackingItems() {
+
+  const rows =
+    await readNotificationSheet(
+      'Takip'
+    );
+
+
+  if (
+    rows.length < 2
+  ) {
+    return [];
+  }
+
+
+  const headers =
+    rows[0].map(
+      value =>
+        String(
+          value || ''
+        ).trim()
+    );
+
+
+  const topicIndex =
+    headers.indexOf(
+      'Konu'
+    );
+
+
+  const typeIndex =
+    headers.indexOf(
+      'Tür'
+    );
+
+
+  const responsibleIndex =
+    headers.indexOf(
+      'Talep / Bilgi Sahibi'
+    );
+
+
+  const statusIndex =
+    headers.indexOf(
+      'Durum'
+    );
+
+
+  const lastCheckIndex =
+    headers.indexOf(
+      'Son Kontrol'
+    );
+
+
+  const nextCheckIndex =
+    headers.indexOf(
+      'Sonraki Kontrol'
+    );
+
+
+  if (
+    topicIndex < 0 ||
+    typeIndex < 0 ||
+    responsibleIndex < 0 ||
+    statusIndex < 0 ||
+    nextCheckIndex < 0
+  ) {
+
+    return [];
+  }
+
+
+  const now =
+    getCurrentIstanbulComparableTime();
+
+
+  const dueItems = [];
+
+
+  for (
+    let rowIndex = 1;
+    rowIndex <
+      rows.length;
+    rowIndex++
+  ) {
+
+    const row =
+      rows[
+        rowIndex
+      ];
+
+
+    if (
+      !Array.isArray(
+        row
+      )
+    ) {
+      continue;
+    }
+
+
+    // Eski Tahsilat / Görev /
+    // Müşteri Takip kayıtlarını
+    // otomatik motor görmez.
+    if (
+      normalizeNotificationText(
+        row[
+          typeIndex
+        ]
+      ) !==
+        'hatırlatma'
+    ) {
+
+      continue;
+    }
+
+
+    if (
+      normalizeNotificationText(
+        row[
+          statusIndex
+        ]
+      ) !==
+        'açık'
+    ) {
+
+      continue;
+    }
+
+
+    const responsible =
+      String(
+        row[
+          responsibleIndex
+        ] || ''
+      ).trim();
+
+
+    // Sahibi yoksa
+    // bildirim de yok.
+    if (
+      !responsible
+    ) {
+
+      continue;
+    }
+
+
     const nextCheckText =
       String(
-        row[nextCheckIndex] || ''
+        row[
+          nextCheckIndex
+        ] || ''
       ).trim();
+
 
     const nextCheckTime =
       parseTrackingDateTime(
         nextCheckText
       );
 
+
     if (
-      nextCheckTime === null ||
-      nextCheckTime > now
+      nextCheckTime ===
+        null ||
+
+      nextCheckTime >
+        now
     ) {
+
       continue;
     }
 
-    const trackingNo =
-      noIndex >= 0
-        ? String(row[noIndex] || rowIndex)
-        : String(rowIndex);
 
-    dueItems.push(
-      `${trackingNo}:${nextCheckText}`
+    dueItems.push({
+      rowNumber:
+        rowIndex + 1,
+
+      topic:
+        String(
+          row[
+            topicIndex
+          ] || ''
+        ).trim(),
+
+      responsible,
+
+      statusColumn:
+        statusIndex + 1,
+
+      lastCheckColumn:
+        lastCheckIndex >= 0
+          ? lastCheckIndex + 1
+          : null,
+
+      signature:
+        `${rowIndex + 1}:${nextCheckText}`
+    });
+  }
+
+
+  return dueItems;
+}
+
+
+async function runDueTrackingReminders(
+  dueItems
+) {
+
+  if (
+    !dueItems.length
+  ) {
+    return;
+  }
+
+
+  const grouped =
+    new Map();
+
+
+  for (
+    const item
+    of dueItems
+  ) {
+
+    const targets =
+      getResponsibleWhatsAppTargets(
+        item.responsible
+      );
+
+
+    if (
+      !targets.length
+    ) {
+
+      continue;
+    }
+
+
+    addNotificationLine(
+      grouped,
+      targets,
+      item.topic
     );
   }
 
-  dueItems.sort();
 
-  return dueItems.join('|');
+  if (
+    !grouped.size
+  ) {
+
+    return;
+  }
+
+
+  await sendGroupedNotifications(
+    grouped,
+    '⏰ Hatırlatma',
+    'tracking_reminder'
+  );
+
+
+  const nowText =
+    formatIstanbulDateTime();
+
+
+  // Bağımsız tek seferlik hatırlatma
+  // gönderildikten sonra kapanır.
+  for (
+    const item
+    of dueItems
+  ) {
+
+    const updates = {
+      [
+        String(
+          item.statusColumn
+        )
+      ]:
+        'Tamamlandı'
+    };
+
+
+    if (
+      item.lastCheckColumn
+    ) {
+
+      updates[
+        String(
+          item.lastCheckColumn
+        )
+      ] =
+        nowText;
+    }
+
+
+    try {
+
+      await bridge(
+        'update_row',
+        {
+          sheet_name:
+            'Takip',
+
+          row_number:
+            item.rowNumber,
+
+          updates
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        'tracking_reminder_complete_error',
+        error?.message ||
+          error
+      );
+    }
+  }
 }
+
+
+// =========================================================
+// SCHEDULER
+//
+// Rutin motor:
+// 08:30
+// 14:00
+// 18:00
+//
+// Takip:
+// her dakika yalnız Takip sheet'i
+// =========================================================
 
 async function proactiveSchedulerTick() {
 
-  const now =
-    getIstanbulClock();
-
-  const dateKey =
-    `${now.year}-${String(now.month).padStart(2, '0')}-${String(now.day).padStart(2, '0')}`;
-
-  let shouldRun = false;
-  let slotName = '';
-
-
-  // -------------------------------------------------------
-  // SABAH GENEL KONTROLÜ - 08:30
-  // -------------------------------------------------------
-
   if (
-    now.hour === 8 &&
-    now.minute >= 30 &&
-    now.minute < 35
+    proactiveSchedulerRunning
   ) {
 
-    shouldRun = true;
-    slotName = `${dateKey}-08:30`;
-
+    return;
   }
 
 
-  // -------------------------------------------------------
-  // GÜN İÇİ GÜVENLİK KONTROLLERİ
-  // -------------------------------------------------------
-
-  const proactiveHours =
-    [10, 12, 14, 16, 18, 20];
-
-  if (
-    proactiveHours.includes(now.hour) &&
-    now.minute >= 0 &&
-    now.minute < 5
-  ) {
-
-    shouldRun = true;
-
-    slotName =
-      `${dateKey}-${String(now.hour).padStart(2, '0')}:00`;
-
-  }
+  proactiveSchedulerRunning =
+    true;
 
 
-  // -------------------------------------------------------
-  // TAKİP SAYFASINDA TAM SAATLİ KONTROL VAR MI?
-  // -------------------------------------------------------
+  try {
 
-  const dueSignature =
-    await getDueTrackingSignature();
+    const now =
+      getIstanbulClock();
 
-  let exactDue = false;
 
-  if (dueSignature) {
+    const dateKey =
+      `${now.year}-${String(
+        now.month
+      ).padStart(
+        2,
+        '0'
+      )}-${String(
+        now.day
+      ).padStart(
+        2,
+        '0'
+      )}`;
 
+
+    let routineSlot =
+      '';
+
+
+    // 08:30
     if (
-      dueSignature !== lastExactDueSignature
+      now.hour === 8 &&
+      now.minute >= 30 &&
+      now.minute < 35
     ) {
 
-      exactDue = true;
+      routineSlot =
+        `${dateKey}-08:30`;
+    }
+
+
+    // 14:00 / 18:00
+    if (
+      [
+        14,
+        18
+      ].includes(
+        now.hour
+      ) &&
+
+      now.minute >= 0 &&
+      now.minute < 5
+    ) {
+
+      routineSlot =
+        `${dateKey}-${String(
+          now.hour
+        ).padStart(
+          2,
+          '0'
+        )}:00`;
+    }
+
+
+    // -----------------------------------------------------
+    // BAĞIMSIZ TAKİP HATIRLATMALARI
+    // -----------------------------------------------------
+
+    const dueItems =
+      await getDueTrackingItems();
+
+
+    const dueSignature =
+      dueItems
+        .map(
+          item =>
+            item.signature
+        )
+        .sort()
+        .join(
+          '|'
+        );
+
+
+    if (
+      dueSignature &&
+
+      dueSignature !==
+        lastExactDueSignature
+    ) {
+
+      await runDueTrackingReminders(
+        dueItems
+      );
+
 
       lastExactDueSignature =
         dueSignature;
 
-    }
-
-  } else {
-
-    // Önceki takip artık zamanı geçmiş listede değil.
-    // Gelecekte yeniden tetiklenebilmesi için temizle.
-    lastExactDueSignature = '';
-
-  }
-
-
-  // -------------------------------------------------------
-  // TAM SAATLİ TAKİP ÖNCELİKLİDİR
-  // -------------------------------------------------------
-
-  if (exactDue) {
-
-    // Eğer aynı dakika rutin kontrol saatine de denk geldiyse
-    // bir dakika sonra ikinci kez çalışmasını engelle.
-    if (
-      shouldRun &&
-      slotName
+    } else if (
+      !dueSignature
     ) {
-      lastProactiveSlot =
-        slotName;
+
+      lastExactDueSignature =
+        '';
     }
 
-    console.log(
-      'Tam saatli takip kontrolü başlıyor:',
-      dueSignature
-    );
 
-    await runProactiveCheck(dueSignature);
+    // -----------------------------------------------------
+    // 08:30 / 14:00 / 18:00
+    // -----------------------------------------------------
 
-    return;
+    if (
+      routineSlot &&
+
+      routineSlot !==
+        lastProactiveSlot
+    ) {
+
+      lastProactiveSlot =
+        routineSlot;
+
+
+      console.log(
+        'Planlı bildirim kontrolü başlıyor:',
+        routineSlot
+      );
+
+
+      await runScheduledNotifications();
+    }
+
+
+  } finally {
+
+    proactiveSchedulerRunning =
+      false;
   }
-
-
-  // -------------------------------------------------------
-  // RUTİN KONTROL
-  // -------------------------------------------------------
-
-  if (!shouldRun) {
-    return;
-  }
-
-  if (
-    lastProactiveSlot === slotName
-  ) {
-    return;
-  }
-
-  lastProactiveSlot =
-    slotName;
-
-  console.log(
-    'Proaktif rutin kontrol başlıyor:',
-    slotName
-  );
-
-  await runProactiveCheck();
 }
 
-// Her dakika saate bak.
-// OpenAI her dakika çağrılmaz.
+
+// Her dakika:
+// - saat kontrol edilir
+// - yalnız bağımsız Takip hatırlatmaları okunur
+//
+// Görevler ve Alacak Takip sadece
+// 08:30 / 14:00 / 18:00 okunur.
+
 setInterval(
   () => {
 
     proactiveSchedulerTick()
-      .catch(error => {
+      .catch(
+        error => {
 
-        console.error(
-          'Proaktif zamanlayıcı hatası:',
-          error
-        );
-
-      });
+          console.error(
+            'Bildirim zamanlayıcı hatası:',
+            error
+          );
+        }
+      );
 
   },
   60 * 1000

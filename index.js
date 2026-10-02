@@ -239,7 +239,6 @@ makul biçimde değerlendirilebilen alanları kendin doldur.
 - Kategori
 - Önem
 - Aciliyet
-- Süre
 - Sorumlu
 - Durum
 - Sonraki Aksiyon
@@ -433,7 +432,7 @@ Mevcut bilgilerden makul biçimde değerlendirilebilen alanları kendin belirle.
 operasyonel değerlendirme yapabilirsin.
 
 Kesin bilgi gerektiren ve mevcut verilerden çıkarılamayan alanları uydurma.
-Örneğin kesin Son Gün, Süre veya Sorumlu bilinmiyorsa bunları boş bırak veya
+Örneğin kesin Son Gün veya Sorumlu bilinmiyorsa bunları boş bırak veya
 yalnızca gerçekten gerekli olduğunda Murat'a sor.
 
 Birden fazla alan güncellenebiliyorsa update_task ile bunları tek işlemde
@@ -989,10 +988,6 @@ const tools = [
               type: ['string', 'null']
             },
 
-            'Süre': {
-              type: ['string', 'number', 'null']
-            },
-
             'Sorumlu': {
               type: ['string', 'null']
             },
@@ -1039,7 +1034,7 @@ const tools = [
           updates: {
             type: 'object',
             description:
-            'İzinli alanlar: İş, Şirket, Ürün, Kategori, Önem, Aciliyet, Son Gün, Süre, Sorumlu, Durum, Sonraki Aksiyon, Gelir / Risk.',
+            'İzinli alanlar: İş, Şirket, Ürün, Kategori, Önem, Aciliyet, Son Gün, Sorumlu, Durum, Sonraki Aksiyon, Gelir / Risk.',
             additionalProperties: {
               type: ['string', 'number', 'null']
             }

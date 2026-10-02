@@ -42,6 +42,9 @@ const WHATSAPP_KERIM_WA_ID =
 const WHATSAPP_KADIR_WA_ID =
   process.env.WHATSAPP_KADIR_WA_ID || '';
 
+const WHATSAPP_MERT_WA_ID =
+  process.env.WHATSAPP_MERT_WA_ID || '';
+
 // ============================================================
 // REQUIRED VARIABLES
 // ============================================================
@@ -102,6 +105,13 @@ function getWhatsAppUserName(channel) {
     return 'Kadir';
   }
 
+if (
+  WHATSAPP_MERT_WA_ID &&
+  waId === WHATSAPP_MERT_WA_ID
+) {
+  return 'Mert';
+}
+  
   return 'WhatsApp kullanıcısı';
 }
 
@@ -133,6 +143,12 @@ function getWhatsAppTargetIds(target) {
       : [];
   }
 
+  if (normalized === 'mert') {
+  return WHATSAPP_MERT_WA_ID
+    ? [WHATSAPP_MERT_WA_ID]
+    : [];
+  }
+  
   if (
     normalized === 'herkes' ||
     normalized === 'all'
@@ -140,7 +156,8 @@ function getWhatsAppTargetIds(target) {
     return [
       WHATSAPP_MURAT_WA_ID,
       WHATSAPP_KERIM_WA_ID,
-      WHATSAPP_KADIR_WA_ID
+      WHATSAPP_KADIR_WA_ID,
+      WHATSAPP_MERT_WA_ID
     ].filter(Boolean);
   }
 
@@ -807,6 +824,10 @@ Kadir verdiyse:
 
 Talep / Bilgi Sahibi = "Kadir"
 
+Mert verdiyse:
+
+Talep / Bilgi Sahibi = "Mert"
+
 Kişi bilinmiyorsa isim uydurma.
 
 Sahibi boş olan hatırlatma otomatik WhatsApp bildirimi üretmez.
@@ -1348,7 +1369,7 @@ const tools = [
   function: {
     name: 'send_whatsapp_message',
     description:
-      'Hazırlanan operasyonel mesajı Murat, Kerim, Kadir veya herkese WhatsApp üzerinden gönderir.',
+      'Hazırlanan operasyonel mesajı Murat, Kerim, Kadir, Mert veya herkese WhatsApp üzerinden gönderir.',
     parameters: {
       type: 'object',
       properties: {
@@ -1359,6 +1380,7 @@ const tools = [
             'murat',
             'kerim',
             'kadir',
+            'mert',
             'herkes'
           ]
         },
@@ -2100,7 +2122,7 @@ Kullanıcının kimliğini tahmin etme.
 MANAGER_PROMPT içinde geçen "Murat" işletme sahibi/yönetici
 referansıdır; bunu otomatik olarak konuşan kişi olarak kabul etme.
 
-Bu aşamada Murat, Kerim, Kadir ve diğer WhatsApp kullanıcıları
+Bu aşamada Murat, Kerim, Kadir, Mert ve diğer WhatsApp kullanıcıları
 aynı operasyonel yetkilere sahiptir.
 
 "bugün", "yarın", "1 hafta sonra", "3 dakika sonra", "cuma",
@@ -2938,7 +2960,20 @@ function getResponsibleWhatsAppTargets(
     );
   }
 
+  // - Mert = Mert + Murat
+  
+if (
+  name === 'mert' &&
+  WHATSAPP_MERT_WA_ID
+) {
 
+  targets.push(
+    WHATSAPP_MERT_WA_ID
+  );
+}
+
+  
+  
   if (
     name === 'murat' &&
     WHATSAPP_MURAT_WA_ID

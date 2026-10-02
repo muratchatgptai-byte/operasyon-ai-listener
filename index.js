@@ -496,9 +496,6 @@ olduğunca şunları doldur:
 - Yetkili
 - Telefon / İletişim
 - Sorumlu
-- Kayıt Tarihi
-- Son Güncelleme
-- Kaynak
 
 Bilinmeyen bilgileri uydurma; boş bırak.
 
@@ -543,14 +540,8 @@ Listeyi doğrudan ve kör biçimde Müşteri Ziyaret Planlama'ya aktarma.
 5. Satış açısından anlamlı görünen adayları belirle.
 6. Uygun adayları Müşteri Ziyaret Planlama'ya ekle.
 
-Kaynak bilgisi biliniyorsa her eklenen adayın "Kaynak" alanına yaz.
-
-Örnek Kaynak değerleri:
-- Bursa Ticaret Odası
-- PERDER
-- Murat - özel liste
-- Fuar katılımcı listesi
-- İnternet araştırması
+Kaynak bilgisini adayları araştırmak, karşılaştırmak ve doğrulamak için kullan.
+Müşteri Ziyaret Planlama sayfasında ayrı bir Kaynak alanı tutulmaz.
 
 Murat bir listeyi verdiğinde listedeki her işletmenin mutlaka potansiyel müşteri
 olduğunu varsayma.
@@ -571,10 +562,13 @@ Gerçek müşteri kayıtları ayrı kaynaktan Müşteriler sayfasına gelir.
 Müşteriler sayfası satış, tahsilat, bakiye, ödeme davranışı, iade ve müşteri
 performansı gibi gerçek ticari müşteri verilerinin takip alanıdır.
 
-FOLLOW-UP VE GÖREV AYRIMI:
+MÜŞTERİ TAKİBİ VE GÖREV AYRIMI:
 
 Müşteriyi tekrar aramak, tekrar ziyaret etmek veya cevap beklemek müşteri
 takibidir ve Müşteri Ziyaret Planlama içinde tutulur.
+
+Müşteri takibi Planlanan Ziyaret Tarihi, Son Temas Tarihi ve
+Son Görüşme / Sonuç alanları üzerinden yürütülür.
 
 Müşterinin talebi şirket içinde ayrıca iş yapılmasını gerektiriyorsa bu iş
 Görevler sayfasında görev olabilir.
@@ -587,9 +581,7 @@ Görevler sayfasında görev olabilir.
 - teknik belge
 - maliyet hesabı
 
-Follow-up müşteri ilişkisini takip eder.
-Görev ise follow-up'ın gerçekleşebilmesi için şirket içinde yapılması gereken işi
-takip eder.
+Görev, müşteri takibinden ayrı olarak şirket içinde yapılması gereken işi takip eder.
 
 SAHA RAPORU KURALLARI:
 
@@ -605,12 +597,20 @@ Saha mesajından mümkün olduğunca şu bilgileri çıkar:
 
 - Son Temas Tarihi
 - Son Görüşme / Sonuç
+- Planlanan Ziyaret Tarihi
 - Durum
-- Sonraki Aksiyon
-- Follow-up Tarihi
 - Sorumlu
 
 Murat veya Mert'in aynı bilgileri tek tek kolon adıyla söylemesini bekleme.
+
+Son Temas Tarihi gerçekleşmiş son temasın gerçek tarihidir ve her yeni
+görüşme veya ziyaret gerçekleştiğinde güncel tutulur.
+
+Son Görüşme / Sonuç alanı hem görüşmenin sonucunu hem de müşteriyle ilgili
+bir sonraki beklenen adımı anlaşılır biçimde içerebilir.
+
+Müşteriyle tekrar temas, arama veya ziyaret için kullanılacak tarih
+Planlanan Ziyaret Tarihi alanında tutulur.
 
 Örnek:
 
@@ -618,10 +618,9 @@ Murat veya Mert'in aynı bilgileri tek tek kolon adıyla söylemesini bekleme.
 
 Bu durumda uygun şekilde:
 - Son Temas Tarihi = mevcut tarih
-- Son Görüşme / Sonuç = numune bırakıldı ve görüşmenin sonucu
+- Son Görüşme / Sonuç = numune bırakıldı, olumlu baktılar; cuma tekrar aranacak
+- Planlanan Ziyaret Tarihi = ilgili gerçek cuma tarihi
 - Durum = Takipte
-- Sonraki Aksiyon = müşteriyi tekrar ara
-- Follow-up Tarihi = ilgili gerçek cuma tarihi
 - Sorumlu = bilgi açıkça Mert'in ziyaretiyse Mert
 
 olarak değerlendirilebilir.
@@ -1115,12 +1114,7 @@ const tools = [
               'Telefon / İletişim': { type: ['string', 'null'] },
               'Son Temas Tarihi': { type: ['string', 'null'] },
               'Son Görüşme / Sonuç': { type: ['string', 'null'] },
-              'Sonraki Aksiyon': { type: ['string', 'null'] },
-              'Follow-up Tarihi': { type: ['string', 'null'] },
-              'Sorumlu': { type: ['string', 'null'] },
-              'Kayıt Tarihi': { type: ['string', 'null'] },
-              'Kaynak': { type: ['string', 'null'] },
-              'Son Güncelleme': { type: ['string', 'null'] }
+              'Sorumlu': { type: ['string', 'null'] }
             },
             required: ['İşletme Adı'],
             additionalProperties: false

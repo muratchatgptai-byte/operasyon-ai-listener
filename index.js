@@ -489,7 +489,7 @@ olduğunca şunları doldur:
 - Segment
 - Hedef Ürün
 - Durum
-- Tahmini Potansiyel KG/Ay
+- Planlanan Ziyaret Tarihi
 - Öncelik
 - Bölge
 - Adres
@@ -1107,7 +1107,7 @@ const tools = [
               'Segment': { type: ['string', 'null'] },
               'Hedef Ürün': { type: ['string', 'null'] },
               'Durum': { type: ['string', 'null'] },
-              'Tahmini Potansiyel KG/Ay': { type: ['string', 'number', 'null'] },
+              'Planlanan Ziyaret Tarihi': { type: ['string', 'null'] },
               'Öncelik': { type: ['string', 'null'] },
               'Bölge': { type: ['string', 'null'] },
               'Adres': { type: ['string', 'null'] },

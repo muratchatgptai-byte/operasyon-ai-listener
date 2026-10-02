@@ -3572,55 +3572,83 @@ async function runReceivableNotifications() {
       continue;
     }
 
+const balance =
+  parseMoney(
+    row[
+      balanceIndex
+    ]
+  );
 
-    if (
-      parseMoney(
-        row[
-          balanceIndex
-        ]
-      ) <= 0
-    ) {
 
-      continue;
+if (
+  balance <= 0
+) {
+
+  continue;
+}
+
+
+const dueText =
+  String(
+    row[
+      dueIndex
+    ] || ''
+  ).trim();
+
+
+const dueTime =
+  parseSheetDate(
+    dueText
+  );
+
+
+// Sadece BUGÜN.
+if (
+  dueTime !==
+  today
+) {
+
+  continue;
+}
+
+
+const targets =
+  getResponsibleWhatsAppTargets(
+    responsible
+  );
+
+
+if (
+  !targets.length
+) {
+  continue;
+}
+
+
+const amountText =
+  new Intl.NumberFormat(
+    'tr-TR',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }
+  ).format(
+    balance
+  );
 
 
-    const dueTime =
-      parseSheetDate(
-        row[
-          dueIndex
-        ]
-      );
+const line =
+  `${customer} — ${amountText} TL — ${dueText}`;
 
 
-    // Sadece BUGÜN.
-    if (
-      dueTime !==
-      today
-    ) {
-
-      continue;
-    }
+addNotificationLine(
+  grouped,
+  targets,
+  line
+);
+  
 
 
-    const targets =
-      getResponsibleWhatsAppTargets(
-        responsible
-      );
-
-
-    if (
-      !targets.length
-    ) {
-      continue;
-    }
-
-
-    addNotificationLine(
-      grouped,
-      targets,
-      customer
-    );
   }
 
 

@@ -3692,22 +3692,210 @@ addNotificationLine(
 // =========================================================
 // MÜŞTERİ ZİYARET BİLDİRİM MOTORU
 //
-// 08:30 / 14:00 / 18:00 scheduler'a bağlı.
+// Çalışma:
+// 08:30
+// 14:00
+// 18:00
 //
-// Mert tarafındaki seçim kuralları
-// netleşince yalnız bu fonksiyon doldurulacak.
+// Aday:
+// - İşletme Adı dolu
+// - Sorumlu dolu
+// - Planlanan Ziyaret Tarihi <= bugün
+// - Durum Kazanıldı / Olmadı değil
+//
+// Sorumlu dağıtımı ortak fonksiyondan gelir.
+// Mert = Mert + Murat
 // =========================================================
 
 async function runCustomerVisitNotifications() {
 
-  console.log(
-    JSON.stringify({
-      type:
-        'customer_visit_notification_skipped',
+  const rows =
+    await readNotificationSheet(
+      'Müşteri Ziyaret Planlama'
+    );
 
-      reason:
-        'selection_rules_pending'
-    })
+  if (
+    rows.length < 2
+  ) {
+    return;
+  }
+
+  const headers =
+    rows[0].map(
+      value =>
+        String(
+          value || ''
+        ).trim()
+    );
+
+  const customerIndex =
+    headers.indexOf(
+      'İşletme Adı'
+    );
+
+  const dateIndex =
+    headers.indexOf(
+      'Planlanan Ziyaret Tarihi'
+    );
+
+  const statusIndex =
+    headers.indexOf(
+      'Durum'
+    );
+
+  const productIndex =
+    headers.indexOf(
+      'Hedef Ürün'
+    );
+
+  const resultIndex =
+    headers.indexOf(
+      'Son Görüşme / Sonuç'
+    );
+
+  const responsibleIndex =
+    headers.indexOf(
+      'Sorumlu'
+    );
+
+  if (
+    customerIndex < 0 ||
+    dateIndex < 0 ||
+    statusIndex < 0 ||
+    responsibleIndex < 0
+  ) {
+
+    throw new Error(
+      'Müşteri Ziyaret Planlama bildirim sütunları eksik.'
+    );
+  }
+
+  const {
+    today
+  } =
+    getIstanbulDayKeys();
+
+  const grouped =
+    new Map();
+
+  for (
+    let rowIndex = 1;
+    rowIndex < rows.length;
+    rowIndex++
+  ) {
+
+    const row =
+      rows[rowIndex];
+
+    if (
+      !Array.isArray(
+        row
+      )
+    ) {
+      continue;
+    }
+
+    const customer =
+      String(
+        row[
+          customerIndex
+        ] || ''
+      ).trim();
+
+    const responsible =
+      String(
+        row[
+          responsibleIndex
+        ] || ''
+      ).trim();
+
+    if (
+      !customer ||
+      !responsible
+    ) {
+      continue;
+    }
+
+    const status =
+      normalizeNotificationText(
+        row[
+          statusIndex
+        ]
+      );
+
+    if (
+      status === 'kazanıldı' ||
+      status === 'olmadı'
+    ) {
+      continue;
+    }
+
+    const dateText =
+      String(
+        row[
+          dateIndex
+        ] || ''
+      ).trim();
+
+    const plannedTime =
+      parseSheetDate(
+        dateText
+      );
+
+    if (
+      plannedTime === null ||
+      plannedTime > today
+    ) {
+      continue;
+    }
+
+    const targets =
+      getResponsibleWhatsAppTargets(
+        responsible
+      );
+
+    if (
+      !targets.length
+    ) {
+      continue;
+    }
+
+    const product =
+      productIndex >= 0
+        ? String(
+            row[
+              productIndex
+            ] || ''
+          ).trim()
+        : '';
+
+    const result =
+      resultIndex >= 0
+        ? String(
+            row[
+              resultIndex
+            ] || ''
+          ).trim()
+        : '';
+
+    const parts = [
+      customer,
+      dateText,
+      product,
+      result
+    ].filter(Boolean);
+
+    addNotificationLine(
+      grouped,
+      targets,
+      parts.join(' — ')
+    );
+  }
+
+  await sendGroupedNotifications(
+    grouped,
+    '📍 Müşteri Ziyaretleri',
+    'customer_visits'
   );
 }
 

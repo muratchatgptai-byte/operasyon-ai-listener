@@ -33,6 +33,12 @@ const WHATSAPP_PHONE_NUMBER_ID =
 const META_GRAPH_VERSION =
   process.env.META_GRAPH_VERSION || '';
 
+const HACCP_SERVICE_URL =
+  process.env.HACCP_SERVICE_URL || '';
+
+const HACCP_ROUTER_SECRET =
+  process.env.HACCP_ROUTER_SECRET || '';
+
 const WHATSAPP_MURAT_WA_ID =
   process.env.WHATSAPP_MURAT_WA_ID || '';
 
@@ -54,7 +60,9 @@ for (const [name, value] of Object.entries({
   SLACK_APP_TOKEN,
   OPENAI_API_KEY,
   SHEET_BRIDGE_URL,
-  SHEET_BRIDGE_SECRET
+  SHEET_BRIDGE_SECRET,
+  HACCP_SERVICE_URL,
+  HACCP_ROUTER_SECRET
 })) {
   if (!value) {
     console.error(`Missing required variable: ${name}`);
@@ -4609,6 +4617,101 @@ app.error(
 // WHATSAPP
 // ============================================================
 
+
+async function callHaccpService(
+  waId,
+  actorName,
+  text
+) {
+
+  if (
+    !HACCP_SERVICE_URL ||
+    !HACCP_ROUTER_SECRET
+  ) {
+
+    throw new Error(
+      'HACCP router environment variables eksik'
+    );
+  }
+
+
+  const baseUrl =
+    HACCP_SERVICE_URL
+      .replace(
+        /\/+$/,
+        ''
+      );
+
+
+  const response =
+    await fetch(
+      `${baseUrl}/message`,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+
+          'x-haccp-router-secret':
+            HACCP_ROUTER_SECRET
+        },
+
+        body:
+          JSON.stringify({
+            wa_id:
+              waId,
+
+            actor_name:
+              actorName,
+
+            text
+          }),
+
+        signal:
+          AbortSignal.timeout(
+            30000
+          )
+      }
+    );
+
+
+  const data =
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `HACCP AI HTTP ${response.status}: ${
+        data?.error ||
+        JSON.stringify(data)
+      }`
+    );
+  }
+
+
+  if (
+    !data?.ok ||
+    !data?.reply
+  ) {
+
+    throw new Error(
+      data?.error ||
+      'HACCP AI geçerli cevap dönmedi'
+    );
+  }
+
+
+  return String(
+    data.reply
+  );
+}
+
 async function sendWhatsAppText(to, text) {
 
   if (
@@ -4745,14 +4848,55 @@ async function handleWhatsAppWebhook(body) {
           })
         );
 
-        const reply =
-          await askAgent(
-            `wa:${waId}`,
-            text,
-            message.timestamp ||
-              messageId,
-            []
-          );
+        let reply;
+
+
+        const isHaccpMessage =
+          /^haccp(?:\s|:|-|$)/i
+            .test(
+              text
+            );
+
+
+        if (isHaccpMessage) {
+
+          const haccpText =
+            text
+              .replace(
+                /^haccp(?:\s*[:\-]\s*|\s+)?/i,
+                ''
+              )
+              .trim();
+
+
+          if (!haccpText) {
+
+            reply =
+              'HACCP komutunu "HACCP ..." şeklinde yaz.';
+
+          } else {
+
+            reply =
+              await callHaccpService(
+                waId,
+                getWhatsAppUserName(
+                  `wa:${waId}`
+                ),
+                haccpText
+              );
+          }
+
+        } else {
+
+          reply =
+            await askAgent(
+              `wa:${waId}`,
+              text,
+              message.timestamp ||
+                messageId,
+              []
+            );
+        }
 
         await sendWhatsAppText(
           waId,

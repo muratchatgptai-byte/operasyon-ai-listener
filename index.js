@@ -1929,7 +1929,7 @@ return {
 // OPENAI
 // ============================================================
 
-async function openAI(messages) {
+async function openAI(messages, toolChoice = 'auto') {
 
   const response =
     await fetch(
@@ -1965,7 +1965,7 @@ async function openAI(messages) {
   }
 ],
         
-          tool_choice: 'auto',
+          tool_choice: toolChoice,
         
           reasoning: {
             effort: 'medium'
@@ -4775,6 +4775,152 @@ async function sendWhatsAppText(to, text) {
 }
 
 
+// ============================================================
+// WHATSAPP PHOTO READING - GENERIC, READ ONLY
+// ============================================================
+
+async function getWhatsAppImageInputs(message) {
+
+  const mediaId = String(
+    message?.image?.id || ''
+  ).trim();
+
+  if (!mediaId) {
+    throw new Error('Fotoğraf medya kimliği eksik');
+  }
+
+  const headers = {
+    Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`
+  };
+
+  // Meta API'den fotoğrafın indirme bağlantısını al
+
+  const infoResponse = await fetch(
+    `https://graph.facebook.com/${META_GRAPH_VERSION}/${encodeURIComponent(mediaId)}`,
+    {
+      headers,
+      signal: AbortSignal.timeout(30000)
+    }
+  );
+
+  if (!infoResponse.ok) {
+    throw new Error(
+      'Meta medya bilgisi alınamadı: ' +
+      infoResponse.status
+    );
+  }
+
+  const info = await infoResponse.json();
+
+  if (!info?.url) {
+    throw new Error('Meta görsel URL döndürmedi');
+  }
+
+  const mime = String(
+    info.mime_type ||
+    message.image?.mime_type ||
+    'image/jpeg'
+  ).split(';')[0].toLowerCase();
+
+  if (
+    !['image/jpeg', 'image/png', 'image/webp']
+      .includes(mime)
+  ) {
+    throw new Error(
+      'Desteklenmeyen görsel türü: ' + mime
+    );
+  }
+
+  const maxBytes = 8 * 1024 * 1024;
+
+  if (Number(info.file_size || 0) > maxBytes) {
+    throw new Error('Fotoğraf 8 MB üstünde');
+  }
+
+  // Fotoğrafı WhatsApp sunucusundan indir
+
+  const fileResponse = await fetch(info.url, {
+    headers,
+    signal: AbortSignal.timeout(30000)
+  });
+
+  if (!fileResponse.ok) {
+    throw new Error(
+      'Fotoğraf indirilemedi: ' +
+      fileResponse.status
+    );
+  }
+
+  if (
+    Number(
+      fileResponse.headers.get('content-length') || 0
+    ) > maxBytes
+  ) {
+    throw new Error('Fotoğraf 8 MB üstünde');
+  }
+
+  const bytes = Buffer.from(
+    await fileResponse.arrayBuffer()
+  );
+
+  if (!bytes.length || bytes.length > maxBytes) {
+    throw new Error('Fotoğraf boyutu geçersiz');
+  }
+
+  // OpenAI'ın anlayacağı görsel formatı
+
+  return [{
+    type: 'input_image',
+    image_url:
+      `data:${mime};base64,${bytes.toString('base64')}`
+  }];
+}
+
+
+// ============================================================
+// GENERAL AI IMAGE ANALYSIS
+// ============================================================
+
+async function analyzeWhatsAppImage(text, imageInputs) {
+
+  const result = await openAI([
+    {
+      role: 'system',
+      content:
+        'Görevin genel amaçlı görsel yorumlama. ' +
+        'Kartvizit, tablo, el yazısı, üretim formu ' +
+        've diğer görselleri kullanıcının istediği ' +
+        'gibi incele. Görselde okunamayan bilgiyi ' +
+        'uydurma. Bu özellik yalnızca yorumlama ' +
+        'yapar; kayıt oluşturma veya değiştirme.'
+    },
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'input_text',
+          text:
+            text ||
+            'Bu fotoğrafın içeriğini incele ve açıkla.'
+        },
+        ...imageInputs
+      ]
+    }
+  ], 'none');
+
+  const parts = (result.output || [])
+    .filter(item => item.type === 'message')
+    .flatMap(item => item.content || [])
+    .filter(part => part.type === 'output_text')
+    .map(part => part.text || '');
+
+  return String(
+    result.output_text ||
+    parts.join('\n') ||
+    ''
+  ).trim() || 'Fotoğraf için yanıt üretilemedi.';
+}
+
 async function handleWhatsAppWebhook(body) {
 
   const entries =
@@ -4800,10 +4946,9 @@ async function handleWhatsAppWebhook(body) {
 
       for (const message of messages) {
 
-        if (
-          message?.type !== 'text' ||
-          !message?.from ||
-          !message?.text?.body
+       if (
+          !['text', 'image'].includes(message?.type) ||
+          !message?.from
         ) {
           continue;
         }
@@ -4827,12 +4972,38 @@ async function handleWhatsAppWebhook(body) {
             message.from
           );
 
-        const text =
-          String(
-            message.text.body
-          ).trim();
+        const text = String(
+          message.type === 'image'
+            ? (message.image?.caption || '')
+            : (message.text?.body || '')
+        ).trim();
 
-        if (!text) {
+        let imageInputs = [];
+
+        if (message.type === 'image') {
+
+          try {
+
+            imageInputs =
+              await getWhatsAppImageInputs(message);
+
+          } catch (error) {
+
+            console.error(
+              'whatsapp_image_error',
+              error?.message || error
+            );
+
+            await sendWhatsAppText(
+              waId,
+              'Fotoğraf indirilemedi veya okunamadı. Lütfen tekrar gönder.'
+            );
+
+            continue;
+          }
+        }
+
+        if (!text && !imageInputs.length) {
           continue;
         }
 
@@ -4858,7 +5029,29 @@ async function handleWhatsAppWebhook(body) {
             );
 
 
-        if (isHaccpMessage) {
+         if (imageInputs.length) {
+
+          reply = await analyzeWhatsAppImage(
+            text,
+            imageInputs
+          );
+
+          const channel = `wa:${waId}`;
+          const history = conversations.get(channel) || [];
+
+          conversations.set(channel, [
+            ...history,
+            {
+              role: 'user',
+              content: '[Fotoğraf] ' + text
+            },
+            {
+              role: 'assistant',
+              content: reply
+            }
+          ].slice(-12));
+
+        } else if (isHaccpMessage) {
 
           const haccpText =
             text

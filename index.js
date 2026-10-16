@@ -86,6 +86,7 @@ const app = new App({
 const processed = new Map();
 const conversations = new Map();
 const haccpPhotoSessions = new Map();
+const haccpTextSessions = new Map();
 
 function getWhatsAppUserName(channel) {
 
@@ -5052,6 +5053,109 @@ function haccpReplyNeedsConfirmation(reply) {
   );
 }
 
+function haccpReplyExpectsFollowup(reply) {
+
+  const value =
+    String(reply || '').trim();
+
+
+  return (
+    /\?/i.test(value) ||
+    /onaylıyor musun/i.test(value) ||
+    /nereye kaydedeyim/i.test(value) ||
+    /hangisine bağlayayım/i.test(value) ||
+    /numarasını yaz/i.test(value) ||
+    /belirt\.?$/i.test(value) ||
+    /evet veya hayır/i.test(value)
+  );
+}
+
+
+function getHaccpTextSession(waId) {
+
+  const key =
+    String(waId || '');
+
+
+  const session =
+    haccpTextSessions.get(
+      key
+    ) || null;
+
+
+  if (!session) {
+    return null;
+  }
+
+
+  const maxAgeMs =
+    30 * 60 * 1000;
+
+
+  if (
+    Date.now() -
+    Number(
+      session.updatedAt || 0
+    ) >
+    maxAgeMs
+  ) {
+
+    haccpTextSessions.delete(
+      key
+    );
+
+    return null;
+  }
+
+
+  return session;
+}
+
+
+function setHaccpTextSession(
+  waId,
+  reply
+) {
+
+  const key =
+    String(waId || '');
+
+
+  if (
+    haccpReplyExpectsFollowup(
+      reply
+    )
+  ) {
+
+    haccpTextSessions.set(
+      key,
+      {
+        awaitingReply:
+          true,
+
+        updatedAt:
+          Date.now()
+      }
+    );
+
+    return;
+  }
+
+
+  haccpTextSessions.delete(
+    key
+  );
+}
+
+
+function clearHaccpTextSession(
+  waId
+) {
+
+  haccpTextSessions.delete(
+    String(waId || '')
+  );
+}
 
 function buildHaccpPhotoCommand(
   session,
@@ -5215,9 +5319,14 @@ async function handleWhatsAppWebhook(body) {
           );
 
         let haccpPhotoSession =
-          getHaccpPhotoSession(
-            waId
-          );
+  getHaccpPhotoSession(
+    waId
+  );
+
+const haccpTextSession =
+  getHaccpTextSession(
+    waId
+  );
 
 
         // -----------------------------------------------------
@@ -5442,6 +5551,8 @@ async function handleWhatsAppWebhook(body) {
           }
 
 
+
+          
         // -----------------------------------------------------
         // MURAT: HACCP PREFIX
         // -----------------------------------------------------
@@ -5467,11 +5578,16 @@ async function handleWhatsAppWebhook(body) {
           } else {
 
             reply =
-              await callHaccpService(
-                waId,
-                actorName,
-                haccpText
-              );
+  await callHaccpService(
+    waId,
+    actorName,
+    haccpText
+  );
+
+setHaccpTextSession(
+  waId,
+  reply
+);
           }
 
 

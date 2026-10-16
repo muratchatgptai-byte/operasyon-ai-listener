@@ -5551,6 +5551,28 @@ const haccpTextSession =
           }
 
 
+// -----------------------------------------------------
+// MURAT: HACCP DEVAM CEVABI
+// -----------------------------------------------------
+
+} else if (
+  userRole === 'dual' &&
+  !isHaccpMessage &&
+  haccpTextSession
+    ?.awaitingReply
+) {
+
+  reply =
+    await callHaccpService(
+      waId,
+      actorName,
+      String(text || '').trim()
+    );
+
+  setHaccpTextSession(
+    waId,
+    reply
+  );
 
           
         // -----------------------------------------------------

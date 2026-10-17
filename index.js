@@ -88,6 +88,9 @@ const conversations = new Map();
 const haccpPhotoSessions = new Map();
 const haccpTextSessions = new Map();
 
+const dualModeSessions =
+  new Map();
+
 function getWhatsAppUserName(channel) {
 
   if (!channel?.startsWith('wa:')) {
@@ -158,6 +161,350 @@ function getWhatsAppUserRole(waId) {
   return 'operation';
 }
 
+function getDualMode(
+  waId
+) {
+
+  const key =
+    String(
+      waId || ''
+    );
+
+
+  const session =
+    dualModeSessions.get(
+      key
+    );
+
+
+  return session?.mode ===
+    'haccp'
+      ? 'haccp'
+      : 'operation';
+}
+
+
+function setDualMode(
+  waId,
+  mode
+) {
+
+  const normalized =
+    mode === 'haccp'
+      ? 'haccp'
+      : 'operation';
+
+
+  dualModeSessions.set(
+    String(
+      waId || ''
+    ),
+    {
+      mode:
+        normalized,
+
+      updatedAt:
+        Date.now()
+    }
+  );
+
+
+  return normalized;
+}
+
+
+function isShortContextReply(
+  text
+) {
+
+  const value =
+    String(
+      text || ''
+    ).trim();
+
+
+  if (!value) {
+    return false;
+  }
+
+
+  if (
+    value.length <= 12 &&
+    /^(?:evet|hayır|hayir|tamam|ok|olur|onay|onayla|iptal|vazgeç|vazgec|\d+(?:[.,:]\d+)?(?:\s*(?:kg|gr|g|adet|batch))?)$/i
+      .test(
+        value
+      )
+  ) {
+
+    return true;
+  }
+
+
+  if (
+    /^\d{1,2}[:.]\d{2}$/
+      .test(
+        value
+      )
+  ) {
+
+    return true;
+  }
+
+
+  return false;
+}
+
+
+async function classifyDualMessageRoute(
+  waId,
+  text
+) {
+
+  const currentMode =
+    getDualMode(
+      waId
+    );
+
+
+  const value =
+    String(
+      text || ''
+    ).trim();
+
+
+  // ----------------------------------------------------------
+  // MANUEL OVERRIDE
+  // ----------------------------------------------------------
+
+  if (
+    /^haccp(?:\s|:|-|$)/i
+      .test(
+        value
+      )
+  ) {
+
+    return {
+      route:
+        'haccp',
+
+      reason:
+        'explicit_haccp'
+    };
+  }
+
+
+  if (
+    /^(?:operasyon|operasyona\s+dön|operasyona\s+don)(?:\s|:|-|$)/i
+      .test(
+        value
+      )
+  ) {
+
+    return {
+      route:
+        'operation',
+
+      reason:
+        'explicit_operation'
+    };
+  }
+
+
+  // ----------------------------------------------------------
+  // KISA CEVAPLAR MEVCUT BAĞLAMDA KALIR
+  // ----------------------------------------------------------
+
+  if (
+    isShortContextReply(
+      value
+    )
+  ) {
+
+    return {
+      route:
+        currentMode,
+
+      reason:
+        'context_reply'
+    };
+  }
+
+
+  // ----------------------------------------------------------
+  // AI SEMANTIC ROUTER
+  // ----------------------------------------------------------
+
+  const prompt = `
+Sen yalnızca WhatsApp mesajını iki çalışma alanından
+hangisinin işlemesi gerektiğine karar veren bir yönlendiricisin.
+
+Kullanıcı Murat'tır.
+
+İki çalışma alanı vardır:
+
+HACCP:
+- üretim
+- üretim kaydı
+- parti
+- batch
+- dolum
+- gramaj
+- pH
+- sıcaklık
+- proses
+- homojenizasyon
+- kültür
+- fermantasyon
+- reçete
+- temizlik
+- depo sıcaklığı
+- HACCP kayıtları
+- üretim dosyası
+- üretim şablonu
+- gıda güvenliği
+
+OPERASYON:
+- görevler
+- tahsilat
+- satış
+- müşteri
+- ziyaret
+- personel
+- Kerim
+- Kadir
+- Mert
+- cari
+- ödeme
+- genel işletme yönetimi
+- normal genel sohbet
+
+Mevcut çalışma alanı:
+${currentMode}
+
+Kurallar:
+
+1. Mesaj açıkça HACCP/üretim tarafıyla ilgiliyse "haccp".
+2. Mesaj açıkça operasyon tarafıyla ilgiliyse "operation".
+3. Genel sohbet veya iki alanla ilgisiz konuşma "operation".
+4. Mesaj mevcut konuşmanın devamı gibi görünüyorsa ve
+   başka alana geçmek için açık sebep yoksa mevcut alanı koru.
+5. Tek bir kelime geçti diye alan değiştirme.
+6. Emin değilsen mevcut alanı koru.
+7. Sadece JSON döndür.
+
+Format:
+
+{
+  "route": "haccp | operation",
+  "reason": ""
+}
+`.trim();
+
+
+  const response =
+    await fetch(
+      'https://api.openai.com/v1/responses',
+      {
+        method:
+          'POST',
+
+        headers: {
+          Authorization:
+            `Bearer ${OPENAI_API_KEY}`,
+
+          'Content-Type':
+            'application/json'
+        },
+
+        body:
+          JSON.stringify({
+            model:
+              OPENAI_MODEL,
+
+            input: [
+              {
+                role:
+                  'system',
+
+                content:
+                  prompt
+              },
+              {
+                role:
+                  'user',
+
+                content:
+                  value
+              }
+            ],
+
+            reasoning: {
+              effort:
+                'low'
+            },
+
+            max_output_tokens:
+              120
+          })
+      }
+    );
+
+
+  const body =
+    await response.json();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      body?.error?.message ||
+      `OpenAI router HTTP ${response.status}`
+    );
+  }
+
+
+  const outputText =
+    extractOpenAIText(
+      body
+    );
+
+
+  let parsed;
+
+
+  try {
+
+    parsed =
+      JSON.parse(
+        outputText
+      );
+
+  } catch {
+
+    return {
+      route:
+        currentMode,
+
+      reason:
+        'router_parse_fallback'
+    };
+  }
+
+
+  return {
+    route:
+      parsed?.route ===
+        'haccp'
+          ? 'haccp'
+          : 'operation',
+
+    reason:
+      String(
+        parsed?.reason ||
+        ''
+      )
+  };
+}
   
 function getWhatsAppTargetIds(target) {
 
@@ -5294,54 +5641,155 @@ async function handleWhatsAppWebhook(body) {
           })
         );
 
-       let reply;
+      let reply;
+
 
         const actorName =
           getWhatsAppUserName(
             `wa:${waId}`
           );
 
+
         const userRole =
           getWhatsAppUserRole(
             waId
           );
 
+
+        let dualRoute =
+          null;
+
+
+        if (
+          userRole === 'dual'
+        ) {
+
+          try {
+
+            dualRoute =
+              await classifyDualMessageRoute(
+                waId,
+                text
+              );
+
+          } catch (err) {
+
+            console.error(
+              JSON.stringify({
+                type:
+                  'dual_route_failed',
+
+                wa_id:
+                  waId,
+
+                error:
+                  err?.message ||
+                  String(err)
+              })
+            );
+
+
+            dualRoute = {
+              route:
+                getDualMode(
+                  waId
+                ),
+
+              reason:
+                'router_error_fallback'
+            };
+          }
+
+
+          setDualMode(
+            waId,
+            dualRoute.route
+          );
+        }
+
+
+        const activeMode =
+          userRole === 'haccp'
+            ? 'haccp'
+            : userRole === 'dual'
+              ? getDualMode(
+                  waId
+                )
+              : 'operation';
+
+
         const isHaccpMessage =
+          userRole === 'dual' &&
+          activeMode === 'haccp';
+
+
+        const explicitHaccpCommand =
           /^haccp(?:\s|:|-|$)/i
             .test(
-              text
+              String(
+                text || ''
+              ).trim()
             );
 
-        const isHaccpStart =
-          userRole === 'dual' &&
-          /^haccp$/i.test(
-            String(text || '').trim()
-          );
+
+        const explicitOperationCommand =
+          /^(?:operasyon|operasyona\s+dön|operasyona\s+don)(?:\s|:|-|$)/i
+            .test(
+              String(
+                text || ''
+              ).trim()
+            );
+
 
         let haccpPhotoSession =
-  getHaccpPhotoSession(
-    waId
-  );
-
-const haccpTextSession =
-  getHaccpTextSession(
-    waId
-  );
+          getHaccpPhotoSession(
+            waId
+          );
 
 
+        const haccpTextSession =
+          getHaccpTextSession(
+            waId
+          );
+
+
+      // -----------------------------------------------------
+        // MURAT: AÇIK MOD DEĞİŞTİRME
         // -----------------------------------------------------
-        // MURAT: HACCP FOTOĞRAF BAĞLAMINI BAŞLAT
-        // -----------------------------------------------------
 
-        if (isHaccpStart) {
-
-          haccpPhotoSession =
-            startHaccpPhotoSession(
-              waId
-            );
+        if (
+          userRole === 'dual' &&
+          explicitHaccpCommand &&
+          /^haccp$/i.test(
+            String(text || '').trim()
+          )
+        ) {
 
           reply =
-            'HACCP bağlamı açıldı. Fotoğrafı gönder.';
+            'HACCP moduna geçtim.';
+
+
+        } else if (
+          userRole === 'dual' &&
+          explicitOperationCommand
+        ) {
+
+          clearHaccpTextSession(
+            waId
+          );
+
+          clearHaccpPhotoSession(
+            waId
+          );
+
+          setDualMode(
+            waId,
+            'operation'
+          );
+
+          reply =
+            'Operasyon moduna geçtim.';
+
 
 
         // -----------------------------------------------------
@@ -5378,6 +5826,10 @@ const haccpTextSession =
           imageInputs.length &&
           (
             userRole === 'haccp' ||
+            (
+              userRole === 'dual' &&
+              activeMode === 'haccp'
+            ) ||
             haccpPhotoSession?.active
           )
         ) {
@@ -5552,65 +6004,48 @@ const haccpTextSession =
 
 
 // -----------------------------------------------------
-// MURAT: HACCP DEVAM CEVABI
+// MURAT: HACCP MODU
 // -----------------------------------------------------
 
 } else if (
   userRole === 'dual' &&
-  !isHaccpMessage &&
-  haccpTextSession
-    ?.awaitingReply
+  activeMode === 'haccp'
 ) {
 
-  reply =
-    await callHaccpService(
-      waId,
-      actorName,
-      String(text || '').trim()
-    );
+  const haccpText =
+    String(
+      text || ''
+    )
+      .replace(
+        /^haccp(?:\s*[:\-]\s*|\s+)?/i,
+        ''
+      )
+      .trim();
 
-  setHaccpTextSession(
-    waId,
-    reply
-  );
+
+  if (!haccpText) {
+
+    reply =
+      'HACCP modundayım.';
+
+  } else {
+
+    reply =
+      await callHaccpService(
+        waId,
+        actorName,
+        haccpText
+      );
+
+
+    setHaccpTextSession(
+      waId,
+      reply
+    );
+  }
 
           
-        // -----------------------------------------------------
-        // MURAT: HACCP PREFIX
-        // -----------------------------------------------------
-
-        } else if (
-          userRole === 'dual' &&
-          isHaccpMessage
-        ) {
-
-          const haccpText =
-            text
-              .replace(
-                /^haccp(?:\s*[:\-]\s*|\s+)?/i,
-                ''
-              )
-              .trim();
-
-          if (!haccpText) {
-
-            reply =
-              'HACCP komutunu yaz veya fotoğraf gönder.';
-
-          } else {
-
-            reply =
-  await callHaccpService(
-    waId,
-    actorName,
-    haccpText
-  );
-
-setHaccpTextSession(
-  waId,
-  reply
-);
-          }
+       
 
 
         // -----------------------------------------------------

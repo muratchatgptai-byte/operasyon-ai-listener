@@ -463,10 +463,34 @@ Format:
   }
 
 
-  const outputText =
-    extractOpenAIText(
-      body
+ const outputParts =
+  (body.output || [])
+    .filter(
+      item =>
+        item?.type ===
+        'message'
+    )
+    .flatMap(
+      item =>
+        item.content || []
+    )
+    .filter(
+      part =>
+        part?.type ===
+        'output_text'
+    )
+    .map(
+      part =>
+        part.text || ''
     );
+
+
+const outputText =
+  String(
+    body.output_text ||
+    outputParts.join('\n') ||
+    ''
+  ).trim();
 
 
   let parsed;

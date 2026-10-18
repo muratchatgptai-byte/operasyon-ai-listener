@@ -184,10 +184,34 @@ function getDualMode(
 }
 
 
+function isDualModeLocked(
+  waId
+) {
+
+  const session =
+    dualModeSessions.get(
+      String(
+        waId || ''
+      )
+    );
+
+
+  return session?.locked ===
+    true;
+}
+
+
 function setDualMode(
   waId,
-  mode
+  mode,
+  locked
 ) {
+
+  const key =
+    String(
+      waId || ''
+    );
+
 
   const normalized =
     mode === 'haccp'
@@ -195,13 +219,28 @@ function setDualMode(
       : 'operation';
 
 
+  const previous =
+    dualModeSessions.get(
+      key
+    );
+
+
+  const nextLocked =
+    typeof locked ===
+      'boolean'
+        ? locked
+        : previous?.locked ===
+          true;
+
+
   dualModeSessions.set(
-    String(
-      waId || ''
-    ),
+    key,
     {
       mode:
         normalized,
+
+      locked:
+        nextLocked,
 
       updatedAt:
         Date.now()
@@ -283,9 +322,12 @@ async function classifyDualMessageRoute(
       )
   ) {
 
-    return {
+     return {
       route:
         'haccp',
+
+      locked:
+        true,
 
       reason:
         'explicit_haccp'
@@ -304,12 +346,39 @@ async function classifyDualMessageRoute(
       route:
         'operation',
 
+      locked:
+        true,
+
       reason:
         'explicit_operation'
     };
+    
   }
 
 
+  // ----------------------------------------------------------
+  // MANUEL MOD KİLİDİ
+  // ----------------------------------------------------------
+
+  if (
+    isDualModeLocked(
+      waId
+    )
+  ) {
+
+    return {
+      route:
+        currentMode,
+
+      locked:
+        true,
+
+      reason:
+        'manual_mode_lock'
+    };
+  }
+
+  
   // ----------------------------------------------------------
   // KISA CEVAPLAR MEVCUT BAĞLAMDA KALIR
   // ----------------------------------------------------------
@@ -5724,11 +5793,12 @@ async function handleWhatsAppWebhook(body) {
             };
           }
 
-
-          setDualMode(
+     setDualMode(
             waId,
-            dualRoute.route
+            dualRoute.route,
+            dualRoute.locked
           );
+          
         }
 
 
